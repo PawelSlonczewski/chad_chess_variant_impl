@@ -122,27 +122,27 @@ public class Board {
     public static Board createStandardBoard() {
         final Builder builder = new Builder();
         // Black Layout
-//        builder.setPiece(new Rook(Alliance.BLACK, 31));
-//        builder.setPiece(new Rook(Alliance.BLACK, 32));
-//        builder.setPiece(new Rook(Alliance.BLACK, 33));
-//        builder.setPiece(new Rook(Alliance.BLACK, 43));
-        builder.setPiece(new King(Alliance.BLACK, 31));
-//        builder.setPiece(new Rook(Alliance.BLACK, 45));
-//        builder.setPiece(new Rook(Alliance.BLACK, 55));
-//        builder.setPiece(new Rook(Alliance.BLACK, 56));
-//        builder.setPiece(new Rook(Alliance.BLACK, 57));
+        builder.setPiece(new Rook(Alliance.BLACK, 31));
+        builder.setPiece(new Rook(Alliance.BLACK, 32));
+        builder.setPiece(new Rook(Alliance.BLACK, 33));
+        builder.setPiece(new Rook(Alliance.BLACK, 43));
+        builder.setPiece(new King(Alliance.BLACK, 44));
+        builder.setPiece(new Rook(Alliance.BLACK, 45));
+        builder.setPiece(new Rook(Alliance.BLACK, 55));
+        builder.setPiece(new Rook(Alliance.BLACK, 56));
+        builder.setPiece(new Rook(Alliance.BLACK, 57));
 
 
         //White Layout
         builder.setPiece(new Rook(Alliance.WHITE, 86));
-//        builder.setPiece(new Rook(Alliance.WHITE, 87));
-//        builder.setPiece(new Rook(Alliance.WHITE, 88));
-//        builder.setPiece(new Rook(Alliance.WHITE, 98));
+        builder.setPiece(new Rook(Alliance.WHITE, 87));
+        builder.setPiece(new Rook(Alliance.WHITE, 88));
+        builder.setPiece(new Rook(Alliance.WHITE, 98));
         builder.setPiece(new King(Alliance.WHITE, 99));
-//        builder.setPiece(new Rook(Alliance.WHITE, 100));
-//        builder.setPiece(new Rook(Alliance.WHITE, 110));
-//        builder.setPiece(new Rook(Alliance.WHITE, 111));
-//        builder.setPiece(new Rook(Alliance.WHITE, 112));
+        builder.setPiece(new Rook(Alliance.WHITE, 100));
+        builder.setPiece(new Rook(Alliance.WHITE, 110));
+        builder.setPiece(new Rook(Alliance.WHITE, 111));
+        builder.setPiece(new Rook(Alliance.WHITE, 112));
 
         builder.setMoveMaker(Alliance.WHITE);
 
