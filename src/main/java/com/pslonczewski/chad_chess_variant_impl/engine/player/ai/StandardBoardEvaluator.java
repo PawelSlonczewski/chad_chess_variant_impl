@@ -22,12 +22,7 @@ public final class StandardBoardEvaluator implements BoardEvaluator {
         return pieceValue(player)
                 + mobility(player)
                 + check(player)
-                + checkmate(player, depth)
-                + castled(player);
-    }
-
-    private static int castled(Player player) {
-        return player.isCastled() ? CASTLE_BONUS : 0;
+                + checkmate(player, depth);
     }
 
     private static int checkmate(final Player player, final int depth) {

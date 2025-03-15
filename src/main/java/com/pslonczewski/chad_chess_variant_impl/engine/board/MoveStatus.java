@@ -1,4 +1,4 @@
-package com.pslonczewski.chad_chess_variant_impl.engine.player;
+package com.pslonczewski.chad_chess_variant_impl.engine.board;
 
 public enum MoveStatus {
     DONE {

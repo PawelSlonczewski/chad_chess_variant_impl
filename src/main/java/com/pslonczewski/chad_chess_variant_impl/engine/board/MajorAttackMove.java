@@ -7,7 +7,7 @@ public class MajorAttackMove extends AttackMove {
     public MajorAttackMove(final Board board, final Piece movedPiece, final int destinationCoordinate,
                            final Piece attackedPiece) {
         super(board, movedPiece, destinationCoordinate, attackedPiece);
-        System.out.println("Major attack move created!\n" + this.toString());
+//        System.out.println("Major attack move created!\n" + this.toString());
     }
 
     @Override

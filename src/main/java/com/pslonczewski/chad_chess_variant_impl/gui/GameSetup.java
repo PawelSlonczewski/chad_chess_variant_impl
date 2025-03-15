@@ -51,13 +51,10 @@ public class GameSetup extends JDialog {
         final JButton cancelButton = new JButton("Cancel");
         final JButton okButton = new JButton("OK");
 
-        okButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                whitePlayerType = whiteComputerButton.isSelected() ? PlayerType.COMPUTER : PlayerType.HUMAN;
-                blackPlayerType = blackComputerButton.isSelected() ? PlayerType.COMPUTER : PlayerType.HUMAN;
-                GameSetup.this.setVisible(false);
-            }
+        okButton.addActionListener(e -> {
+            this.whitePlayerType = whiteComputerButton.isSelected() ? PlayerType.COMPUTER : PlayerType.HUMAN;
+            this.blackPlayerType = blackComputerButton.isSelected() ? PlayerType.COMPUTER : PlayerType.HUMAN;
+            GameSetup.this.setVisible(false);
         });
 
         cancelButton.addActionListener(new ActionListener() {
@@ -74,6 +71,10 @@ public class GameSetup extends JDialog {
         setLocationRelativeTo(frame);
         pack();
         setVisible(false);
+    }
+
+    public int getSearchDepthSpinnerValue() {
+        return (Integer) searchDepthSpinner.getValue();
     }
 
     void promptUser() {

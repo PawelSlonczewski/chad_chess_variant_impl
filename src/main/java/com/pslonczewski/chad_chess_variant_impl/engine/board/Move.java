@@ -66,10 +66,6 @@ public abstract class Move {
         return false;
     }
 
-    public boolean isCastlingMove() {
-        return false;
-    }
-
     public Piece getAttackedPiece() {
         return null;
     }

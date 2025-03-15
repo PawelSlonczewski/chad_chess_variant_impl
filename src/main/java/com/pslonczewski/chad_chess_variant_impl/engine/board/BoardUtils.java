@@ -163,4 +163,13 @@ public class BoardUtils {
     public static String getPositionAtCoordinate(final int coordinate) {
         return ALGEBRAIC_NOTATION[coordinate];
     }
+
+    public static boolean isEndGameScenario(final Board board) {
+        return board.getCurrentPlayer().isInCheckMate()
+                || board.getCurrentPlayer().isInStaleMate();
+    }
+
+    public static boolean isThreatenedBoardImmediate(final Board board) {
+        return board.getWhitePlayer().isInCheckMate() | board.getBlackPlayer().isInCheckMate();
+    }
 }

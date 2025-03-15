@@ -4,7 +4,8 @@ import com.google.common.collect.Lists;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.*;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Move.MoveFactory;
 import com.pslonczewski.chad_chess_variant_impl.engine.pieces.Piece;
-import com.pslonczewski.chad_chess_variant_impl.engine.player.MoveTransition;
+import com.pslonczewski.chad_chess_variant_impl.engine.board.MoveTransition;
+import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.AlphaBetaPruningWithMoveSorter;
 import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.MiniMax;
 import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.MoveStrategy;
 
@@ -56,7 +57,7 @@ public class Table extends Observable {
     private static final Table INSTANCE = new Table();
 
     private Table() {
-        this.gameFrame = new JFrame("JChess");
+        this.gameFrame = new JFrame("Chad");
         this.gameFrame.setLayout(new BorderLayout());
         final JMenuBar tableMenuBar = createTableMenuBar();
         this.gameFrame.setJMenuBar(tableMenuBar);
@@ -240,11 +241,15 @@ public class Table extends Observable {
         @Override
         protected Move doInBackground() throws Exception {
 
-            final MoveStrategy miniMax = new MiniMax(4);
+            final MoveStrategy miniMax = new MiniMax();
 
-            final Move bestMove = miniMax.execute(Table.get().getGameBoard());
+            return miniMax.execute(Table.get().getGameBoard(),
+                                   Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            return bestMove;
+//            final MoveStrategy alphaBetaPrun = new AlphaBetaPruningWithMoveSorter();
+//
+//            return alphaBetaPrun.execute(Table.get().getGameBoard(),
+//                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
         }
 
         @Override
@@ -346,7 +351,7 @@ public class Table extends Observable {
                         sourceTile = null;
                         destinationTile = null;
                         humanMovedPiece = null;
-                    } else if (isLeftMouseButton(e)) {
+                    } else if (isLeftMouseButton(e) && !gameSetup.isAIPlayer(chessBoard.getCurrentPlayer())) {
                         if (sourceTile == null) {
                             // first click
                             sourceTile = chessBoard.getTile(tileId);
@@ -376,7 +381,7 @@ public class Table extends Observable {
                                 gameHistoryPanel.redo(chessBoard, moveLog);
                                 takenPiecesPanel.redo(moveLog);
 //                                if (gameSetup.isAIPlayer(chessBoard.getCurrentPlayer())) {
-                                    Table.get().moveMadeUpdate(PlayerType.HUMAN);
+                                Table.get().moveMadeUpdate(PlayerType.HUMAN);
 //                                }
                                 boardPanel.drawBoard(chessBoard);
                             }

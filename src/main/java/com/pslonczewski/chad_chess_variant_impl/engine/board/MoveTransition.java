@@ -1,9 +1,4 @@
-package com.pslonczewski.chad_chess_variant_impl.engine.player;
-
-import com.pslonczewski.chad_chess_variant_impl.engine.board.Board;
-import com.pslonczewski.chad_chess_variant_impl.engine.board.Move;
-
-import java.util.concurrent.Future;
+package com.pslonczewski.chad_chess_variant_impl.engine.board;
 
 public class MoveTransition {
 

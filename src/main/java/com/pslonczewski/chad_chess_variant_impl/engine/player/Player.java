@@ -1,10 +1,11 @@
 package com.pslonczewski.chad_chess_variant_impl.engine.player;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.pslonczewski.chad_chess_variant_impl.engine.Alliance;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Board;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Move;
+import com.pslonczewski.chad_chess_variant_impl.engine.board.MoveStatus;
+import com.pslonczewski.chad_chess_variant_impl.engine.board.MoveTransition;
 import com.pslonczewski.chad_chess_variant_impl.engine.pieces.King;
 import com.pslonczewski.chad_chess_variant_impl.engine.pieces.Piece;
 
@@ -70,10 +71,6 @@ public abstract class Player {
                 return true;
             }
         }
-        return false;
-    }
-
-    public boolean isCastled() {
         return false;
     }
 

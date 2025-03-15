@@ -5,5 +5,7 @@ import com.pslonczewski.chad_chess_variant_impl.engine.board.Move;
 
 public interface MoveStrategy {
 
-    Move execute(Board board);
+    long getNumBoardsEvaluated();
+
+    Move execute(final Board board, final int depth);
 }

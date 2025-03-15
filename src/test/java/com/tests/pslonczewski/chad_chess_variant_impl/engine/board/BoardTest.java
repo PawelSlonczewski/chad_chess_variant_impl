@@ -1,15 +1,13 @@
 package com.tests.pslonczewski.chad_chess_variant_impl.engine.board;
 
 import com.google.common.collect.Iterables;
-import com.pslonczewski.chad_chess_variant_impl.engine.Alliance;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Board;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Move;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Move.MoveFactory;
+import com.pslonczewski.chad_chess_variant_impl.engine.pieces.King;
 import com.pslonczewski.chad_chess_variant_impl.engine.pieces.Piece;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.BoardUtils;
-import com.pslonczewski.chad_chess_variant_impl.engine.player.MoveTransition;
-import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.MiniMax;
-import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.MoveStrategy;
+import com.pslonczewski.chad_chess_variant_impl.engine.board.MoveTransition;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,11 +18,10 @@ class BoardTest {
     public void initialBoard() {
 
         final Board board = Board.createStandardBoard();
-        assertEquals(board.getCurrentPlayer().getLegalMoves().size(), 20);
-        assertEquals(board.getCurrentPlayer().getOpponent().getLegalMoves().size(), 20);
+        assertEquals(54, board.getCurrentPlayer().getLegalMoves().size());
+        assertEquals(54, board.getCurrentPlayer().getOpponent().getLegalMoves().size());
         assertFalse(board.getCurrentPlayer().isInCheck());
         assertFalse(board.getCurrentPlayer().isInCheckMate());
-        assertFalse(board.getCurrentPlayer().isCastled());
 //        assertTrue(board.getCurrentPlayer().isKingSideCastleCapable());
 //        assertTrue(board.getCurrentPlayer().isQueenSideCastleCapable());
         assertEquals(board.getCurrentPlayer(), board.getWhitePlayer());
@@ -32,11 +29,10 @@ class BoardTest {
         assertEquals(board.getCurrentPlayer().getOpponent(), board.getBlackPlayer());
         assertFalse(board.getCurrentPlayer().getOpponent().isInCheck());
         assertFalse(board.getCurrentPlayer().getOpponent().isInCheckMate());
-        assertFalse(board.getCurrentPlayer().getOpponent().isCastled());
 //        assertTrue(board.getCurrentPlayer().getOpponent().isKingSideCastleCapable());
 //        assertTrue(board.getCurrentPlayer().getOpponent().isQueenSideCastleCapable());
-        assertTrue(board.getWhitePlayer().toString().equals("White"));
-        assertTrue(board.getBlackPlayer().toString().equals("Black"));
+        assertEquals("White", board.getWhitePlayer().toString());
+        assertEquals("Black", board.getBlackPlayer().toString());
 
 //        assertEquals(new StandardBoardEvaluator().evaluate(board, 0), 0);
 
@@ -44,16 +40,15 @@ class BoardTest {
         final Iterable<Move> allMoves = Iterables.concat(board.getWhitePlayer().getLegalMoves(), board.getBlackPlayer().getLegalMoves());
         for(final Move move : allMoves) {
             assertFalse(move.isAttack());
-            assertFalse(move.isCastlingMove());
 //          assertEquals(MoveUtils.exchangeScore(move), 1);
         }
 
-        assertEquals(Iterables.size(allMoves), 40);
-        assertEquals(Iterables.size(allPieces), 32);
+        assertEquals(108, Iterables.size(allMoves));
+        assertEquals(18, Iterables.size(allPieces));
 //      assertFalse(BoardUtils.isEndGame(board));
 //      assertFalse(BoardUtils.isThreatenedBoardImmediate(board));
 //        assertEquals(StandardBoardEvaluator.get().evaluate(board, 0), 0);
-        assertEquals(board.getPiece(35), null);
+        assertEquals(King.class, board.getPiece(44).getClass());
     }
 
     @Test
@@ -126,39 +121,5 @@ class BoardTest {
 //        assertTrue(t14.getTransitionBoard().getWhitePlayer().getActivePieces().size() == calculatedActivesFor(t14.getTransitionBoard(), Alliance.WHITE));
 //        assertTrue(t14.getTransitionBoard().getBlackPlayer().getActivePieces().size() == calculatedActivesFor(t14.getTransitionBoard(), Alliance.BLACK));
 
-    }
-
-    @Test
-    public void testFoolsMate() {
-        final Board board = Board.createStandardBoard();
-        final MoveTransition t1 = board.getCurrentPlayer().makeMove(
-                MoveFactory.createMove(board, BoardUtils.getCoordinateAtPosition("f2"),
-                        BoardUtils.getCoordinateAtPosition("f3")));
-
-        assertTrue(t1.getMoveStatus().isDone());
-
-        final MoveTransition t2 = t1.getTransitionBoard().getCurrentPlayer().makeMove(
-                MoveFactory.createMove(t1.getTransitionBoard(), BoardUtils.getCoordinateAtPosition("e7"),
-                        BoardUtils.getCoordinateAtPosition("e5")));
-
-        assertTrue(t2.getMoveStatus().isDone());
-
-        final MoveTransition t3 = t2.getTransitionBoard().getCurrentPlayer().makeMove(
-                MoveFactory.createMove(t2.getTransitionBoard(), BoardUtils.getCoordinateAtPosition("g2"),
-                        BoardUtils.getCoordinateAtPosition("g4")));
-
-        assertTrue(t3.getMoveStatus().isDone());
-
-        final MoveStrategy strategy = new MiniMax(4);
-
-        final Move aiMove = strategy.execute(t3.getTransitionBoard());
-
-        System.out.println(aiMove);
-
-        final Move bestMove = MoveFactory
-                .createMove(t3.getTransitionBoard(), BoardUtils.getCoordinateAtPosition("d8"),
-                        BoardUtils.getCoordinateAtPosition("h4"));
-
-        assertEquals(aiMove, bestMove);
     }
 }
