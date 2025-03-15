@@ -241,15 +241,15 @@ public class Table extends Observable {
         @Override
         protected Move doInBackground() throws Exception {
 
-            final MoveStrategy miniMax = new MiniMax();
-
-            return miniMax.execute(Table.get().getGameBoard(),
-                                   Table.get().getGameSetup().getSearchDepthSpinnerValue());
-
-//            final MoveStrategy alphaBetaPrun = new AlphaBetaPruningWithMoveSorter();
+//            final MoveStrategy miniMax = new MiniMax();
 //
-//            return alphaBetaPrun.execute(Table.get().getGameBoard(),
-//                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
+//            return miniMax.execute(Table.get().getGameBoard(),
+//                                   Table.get().getGameSetup().getSearchDepthSpinnerValue());
+
+            final MoveStrategy alphaBetaPrun = new AlphaBetaPruningWithMoveSorter();
+
+            return alphaBetaPrun.execute(Table.get().getGameBoard(),
+                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
         }
 
         @Override

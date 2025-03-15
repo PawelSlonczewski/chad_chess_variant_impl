@@ -5,6 +5,9 @@ import com.pslonczewski.chad_chess_variant_impl.engine.board.BoardUtils;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Move;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.MoveTransition;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
 
     private long boardsEvaluated = 0;
@@ -67,9 +70,15 @@ public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
         for (Move move : board.getCurrentPlayer().getLegalMoves()) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
-                beta = Math.min(beta,
-                                max(moveTransition.getTransitionBoard(), depth - 1,
-                                    alpha, beta));
+                if (depth == 1 && move.isAttack()) {
+                    beta = Math.min(beta,
+                                    quietMax(moveTransition.getTransitionBoard(), alpha, beta));
+                } else {
+                    beta = Math.min(beta,
+                                    max(moveTransition.getTransitionBoard(), depth - 1,
+                                        alpha, beta));
+                }
+
                 if (beta <= alpha) {
                     break;
                 }
@@ -87,9 +96,52 @@ public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
         for (Move move : board.getCurrentPlayer().getLegalMoves()) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
-                alpha = Math.max(alpha,
-                                 min(moveTransition.getTransitionBoard(), depth - 1,
-                                     alpha, beta));
+                if (depth == 1 && move.isAttack()) {
+                    alpha = Math.max(alpha,
+                                     quietMin(moveTransition.getTransitionBoard(), alpha, beta));
+                } else {
+                    alpha = Math.max(alpha,
+                            min(moveTransition.getTransitionBoard(), depth - 1,
+                                    alpha, beta));
+                    if (beta <= alpha) {
+                        break;
+                    }
+                }
+            }
+        }
+        return alpha;
+    }
+
+    private int quietMin(final Board board, final int alpha, int beta) {
+        List<Move> attackMoves = board.getCurrentPlayer().getLegalMoves().stream().filter(Move::isAttack).toList();
+        if (attackMoves.isEmpty()) {
+            return this.evaluator.evaluate(board, 0);
+        } else {
+            for (Move move : attackMoves) {
+                MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
+                if (moveTransition.getMoveStatus().isDone()) {
+                    beta = Math.min(beta,
+                                    quietMax(moveTransition.getTransitionBoard(),
+                                             alpha, beta));
+                    if (beta <= alpha) {
+                        break;
+                    }
+                }
+            }
+        }
+        return beta;
+    }
+
+    private int quietMax(final Board board, int alpha, final int beta) {
+        List<Move> attackMoves = board.getCurrentPlayer().getLegalMoves().stream().filter(Move::isAttack).toList();
+        if (attackMoves.isEmpty()) {
+            return this.evaluator.evaluate(board, 0);
+        } else {
+            for (Move move : attackMoves) {
+                MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
+                if (moveTransition.getMoveStatus().isDone()) {
+                    alpha = Math.max(alpha, quietMin(moveTransition.getTransitionBoard(), alpha, beta));
+                }
                 if (beta <= alpha) {
                     break;
                 }
