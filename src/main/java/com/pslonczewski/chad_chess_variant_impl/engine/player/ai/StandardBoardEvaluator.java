@@ -37,7 +37,7 @@ public final class StandardBoardEvaluator implements BoardEvaluator {
         return player.getOpponent().isInCheckMate() ? CHECK_BONUS : 0;
     }
 
-    private static  int mobility(final Player player) {
+    private static int mobility(final Player player) {
         return player.getLegalMoves().size();
     }
 

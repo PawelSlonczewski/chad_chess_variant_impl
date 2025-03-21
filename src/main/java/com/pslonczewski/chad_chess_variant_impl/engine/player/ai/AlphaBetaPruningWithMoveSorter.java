@@ -1,20 +1,48 @@
 package com.pslonczewski.chad_chess_variant_impl.engine.player.ai;
 
-import com.pslonczewski.chad_chess_variant_impl.engine.board.Board;
-import com.pslonczewski.chad_chess_variant_impl.engine.board.BoardUtils;
-import com.pslonczewski.chad_chess_variant_impl.engine.board.Move;
-import com.pslonczewski.chad_chess_variant_impl.engine.board.MoveTransition;
+import com.google.common.collect.Ordering;
+import com.pslonczewski.chad_chess_variant_impl.engine.board.*;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
 
     private long boardsEvaluated = 0;
     private BoardEvaluator evaluator;
+    private MoveSorter moveSorter;
+
+    private enum MoveSorter {
+
+        SORT {
+            @Override
+            Collection<Move> sort(final Collection<Move> moves) {
+                return Ordering.from(mvvLva).immutableSortedCopy(moves);
+            }
+        };
+
+        public static Comparator<Move> mvvLva = new Comparator<Move>() {
+            @Override
+            public int compare(final Move move1, final Move move2) {
+                if (!(move1 instanceof MajorAttackMove) && !(move2 instanceof MajorAttackMove)) {
+                    return 0;
+                } else if (!(move1 instanceof MajorAttackMove)) {
+                    return 1;
+                } else if (!(move2 instanceof MajorAttackMove)) {
+                    return -1;
+                }
+                return (move2.getAttackedPiece().getPieceValue() - move2.getMovedPiece().getPieceValue())
+                        - (move1.getAttackedPiece().getPieceValue() - move1.getMovedPiece().getPieceValue());
+            }
+        };
+
+        abstract Collection<Move> sort(Collection<Move> moves);
+    }
 
     public AlphaBetaPruningWithMoveSorter() {
         this.evaluator = new StandardBoardEvaluator();
+        this.moveSorter = MoveSorter.SORT;
     }
 
     @Override
@@ -32,7 +60,7 @@ public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
 
         System.out.println(board.getCurrentPlayer() + " THINKING with depth = " + depth);
 
-        for (Move move : board.getCurrentPlayer().getLegalMoves()) {
+        for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves())) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
 
@@ -67,7 +95,7 @@ public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
             return this.evaluator.evaluate(board, depth);
         }
 
-        for (Move move : board.getCurrentPlayer().getLegalMoves()) {
+        for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves())) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
                 if (depth == 1 && move.isAttack()) {
@@ -93,7 +121,7 @@ public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
             return this.evaluator.evaluate(board, depth);
         }
 
-        for (Move move : board.getCurrentPlayer().getLegalMoves()) {
+        for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves())) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
                 if (depth == 1 && move.isAttack()) {
@@ -113,7 +141,11 @@ public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
     }
 
     private int quietMin(final Board board, final int alpha, int beta) {
-        List<Move> attackMoves = board.getCurrentPlayer().getLegalMoves().stream().filter(Move::isAttack).toList();
+        List<Move> attackMoves = this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves()
+                                                      .stream()
+                                                      .filter(Move::isAttack)
+                                                      .toList())
+                                                .stream().toList();
         if (attackMoves.isEmpty()) {
             return this.evaluator.evaluate(board, 0);
         } else {
@@ -133,7 +165,11 @@ public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
     }
 
     private int quietMax(final Board board, int alpha, final int beta) {
-        List<Move> attackMoves = board.getCurrentPlayer().getLegalMoves().stream().filter(Move::isAttack).toList();
+        List<Move> attackMoves = this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves()
+                                                      .stream()
+                                                      .filter(Move::isAttack)
+                                                      .toList())
+                                                .stream().toList();
         if (attackMoves.isEmpty()) {
             return this.evaluator.evaluate(board, 0);
         } else {
