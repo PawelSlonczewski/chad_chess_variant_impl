@@ -1,10 +1,9 @@
 package com.pslonczewski.chad_chess_variant_impl.engine.board;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.pslonczewski.chad_chess_variant_impl.engine.pieces.Piece.PieceType;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class BoardUtils {
 
@@ -32,6 +31,29 @@ public class BoardUtils {
 
     public static final boolean[] WHITE_WALL = initWall(-1);
     public static final boolean[] BLACK_WALL = initWall(1);
+
+    public static final String[] ALGEBRAIC_NOTATION = initializeAlgebraicNotation();
+    public static final Map<String, Integer> POSITION_TO_COORDINATE = initializePositionToCoordinateMap();
+
+    public static final int NUM_TILES = 144;
+    public static final int NUM_TILES_PER_ROW = 12;
+
+    public static int[] ZOBRIST_TABLE = initZobristTable(PieceType.values().length * 2 * NUM_TILES);
+
+    private BoardUtils() {
+        throw new RuntimeException("BoardUtils class cannot be instantiated!");
+    }
+
+    private static int[] initZobristTable(final int size) {
+        Set<Integer> uniqueValues = new HashSet<>();
+        Random random = new Random();
+
+        while (uniqueValues.size() < size) {
+            uniqueValues.add(random.nextInt());
+        }
+
+        return uniqueValues.stream().mapToInt(Integer::intValue).toArray();
+    }
 
     private static boolean[] initWall(final int alliance) {
         if (alliance != -1 && alliance != 1) {
@@ -68,18 +90,6 @@ public class BoardUtils {
         }
 
         return result;
-    }
-
-
-
-    public static final String[] ALGEBRAIC_NOTATION = initializeAlgebraicNotation();
-    public static final Map<String, Integer> POSITION_TO_COORDINATE = initializePositionToCoordinateMap();
-
-    public static final int NUM_TILES = 144;
-    public static final int NUM_TILES_PER_ROW = 12;
-
-    private BoardUtils() {
-        throw new RuntimeException("BoardUtils class cannot be instantiated!");
     }
 
     private static String[] initializeAlgebraicNotation() {

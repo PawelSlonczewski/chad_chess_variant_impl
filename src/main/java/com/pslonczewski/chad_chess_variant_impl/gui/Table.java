@@ -6,6 +6,7 @@ import com.pslonczewski.chad_chess_variant_impl.engine.board.Move.MoveFactory;
 import com.pslonczewski.chad_chess_variant_impl.engine.pieces.Piece;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.MoveTransition;
 import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.AlphaBetaPruningWithMoveSorter;
+import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.IterativeDeepening;
 import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.MiniMax;
 import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.MoveStrategy;
 
@@ -246,9 +247,14 @@ public class Table extends Observable {
 //            return miniMax.execute(Table.get().getGameBoard(),
 //                                   Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            final MoveStrategy alphaBetaPrun = new AlphaBetaPruningWithMoveSorter();
+//            final MoveStrategy alphaBetaPrun = new AlphaBetaPruningWithMoveSorter();
+//
+//            return alphaBetaPrun.execute(Table.get().getGameBoard(),
+//                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            return alphaBetaPrun.execute(Table.get().getGameBoard(),
+            final MoveStrategy iterativeDeepeningWithPruning = new IterativeDeepening();
+
+            return iterativeDeepeningWithPruning.execute(Table.get().getGameBoard(),
                     Table.get().getGameSetup().getSearchDepthSpinnerValue());
         }
 
