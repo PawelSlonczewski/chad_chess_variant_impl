@@ -86,10 +86,10 @@ public class GameSetup extends JDialog {
         if (player.getAlliance() == Alliance.WHITE) {
             return getWhitePlayerType() == PlayerType.COMPUTER;
         }
-        return getBlackPlayerTYpe() == PlayerType.COMPUTER;
+        return getBlackPlayerType() == PlayerType.COMPUTER;
     }
 
-    private PlayerType getBlackPlayerTYpe() {
+    private PlayerType getBlackPlayerType() {
         return this.blackPlayerType;
     }
 

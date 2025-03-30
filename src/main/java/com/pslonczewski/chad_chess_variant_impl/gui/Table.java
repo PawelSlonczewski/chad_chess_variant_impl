@@ -5,10 +5,7 @@ import com.pslonczewski.chad_chess_variant_impl.engine.board.*;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Move.MoveFactory;
 import com.pslonczewski.chad_chess_variant_impl.engine.pieces.Piece;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.MoveTransition;
-import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.AlphaBetaPruningWithMoveSorter;
-import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.IterativeDeepening;
-import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.MiniMax;
-import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.MoveStrategy;
+import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -23,6 +20,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static javax.swing.SwingUtilities.isLeftMouseButton;
@@ -41,6 +39,7 @@ public class Table extends Observable {
     private Tile destinationTile;
     private Piece humanMovedPiece;
     private BoardDirection boardDirection;
+    private AtomicBoolean MOVE_FLAG = new AtomicBoolean(false);
 
     private Move computerMove;
 
@@ -54,6 +53,8 @@ public class Table extends Observable {
     private final Color lightTileColor = Color.decode("#FFFACD");
     private final Color darkTileColor = Color.decode("#593E1A");
     private final Color wallTileColor = Color.decode("#3a2222");
+
+    protected static final Map<String, BoardState> rememberedBoards = new HashMap<>();
 
     private static final Table INSTANCE = new Table();
 
@@ -201,6 +202,14 @@ public class Table extends Observable {
                         "Game Over: Player " + Table.get().getGameBoard().getCurrentPlayer() + " is in stalemate!", "Game Over",
                         JOptionPane.INFORMATION_MESSAGE);
             }
+
+            if (Table.get().getGameBoard().isADraw()) {
+                JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
+                        "Game Over: Draw", "Game Over",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+
+
         }
     }
 
@@ -252,9 +261,14 @@ public class Table extends Observable {
 //            return alphaBetaPrun.execute(Table.get().getGameBoard(),
 //                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            final MoveStrategy iterativeDeepeningWithPruning = new IterativeDeepening();
+//            final MoveStrategy iterativeDeepeningWithPruning = new IterativeDeepening();
+//
+//            return iterativeDeepeningWithPruning.execute(Table.get().getGameBoard(),
+//                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            return iterativeDeepeningWithPruning.execute(Table.get().getGameBoard(),
+            final MoveStrategy alphaBetaPrunWithTable = new AlphaBetaPruningWithMoveSorterAndTranspositionTable(rememberedBoards);
+
+            return alphaBetaPrunWithTable.execute(Table.get().getGameBoard(),
                     Table.get().getGameSetup().getSearchDepthSpinnerValue());
         }
 
@@ -376,6 +390,7 @@ public class Table extends Observable {
                             if (transition.getMoveStatus().isDone()) {
                                 chessBoard = transition.getTransitionBoard();
                                 moveLog.addMove(move);
+                                MOVE_FLAG.set(true);
                             }
                             sourceTile = null;
                             destinationTile = null;
@@ -387,9 +402,13 @@ public class Table extends Observable {
                                 gameHistoryPanel.redo(chessBoard, moveLog);
                                 takenPiecesPanel.redo(moveLog);
 //                                if (gameSetup.isAIPlayer(chessBoard.getCurrentPlayer())) {
-                                Table.get().moveMadeUpdate(PlayerType.HUMAN);
-//                                }
+                                if (MOVE_FLAG.get()) {
+                                    Table.get().moveMadeUpdate(PlayerType.HUMAN);
+                                    MOVE_FLAG.set(false);
+                                }
+//                              }
                                 boardPanel.drawBoard(chessBoard);
+                                System.out.println("Board hash code: " + Long.toHexString(chessBoard.getZobristHashCode()));
                             }
                         });
                     }

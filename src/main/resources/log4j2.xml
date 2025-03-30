@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Console Appender -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} %-5p %c{1}:%L - %m%n"/>
+        </Console>
+
+        <!-- File Appender -->
+        <File name="File" fileName="app.log">
+            <PatternLayout pattern="%d{HH:mm:ss} %p %c{1}:%L: %m%n"/>
+        </File>
+    </Appenders>
+
+    <Loggers>
+        <!-- Root Logger Configuration -->
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/> <!-- Uncomment to enable file logging -->
+        </Root>
+    </Loggers>
+</Configuration>

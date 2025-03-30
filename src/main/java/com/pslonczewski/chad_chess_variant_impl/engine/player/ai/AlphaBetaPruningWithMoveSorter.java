@@ -77,10 +77,6 @@ public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
                     beta = currentValue;
                     bestMove = move;
                 }
-
-                if (alpha >= beta) {
-                    bestMove = move;
-                }
             }
         }
         long endTime = System.currentTimeMillis() - startTime;
@@ -131,9 +127,9 @@ public class AlphaBetaPruningWithMoveSorter implements MoveStrategy {
                     alpha = Math.max(alpha,
                             min(moveTransition.getTransitionBoard(), depth - 1,
                                     alpha, beta));
-                    if (beta <= alpha) {
-                        break;
-                    }
+                }
+                if (beta <= alpha) {
+                    break;
                 }
             }
         }

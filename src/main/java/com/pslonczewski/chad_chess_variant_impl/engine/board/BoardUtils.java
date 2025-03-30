@@ -38,21 +38,23 @@ public class BoardUtils {
     public static final int NUM_TILES = 144;
     public static final int NUM_TILES_PER_ROW = 12;
 
-    public static int[] ZOBRIST_TABLE = initZobristTable(PieceType.values().length * 2 * NUM_TILES);
+    public static long[] ZOBRIST_TABLE = initZobristTable(PieceType.values().length * 2 * NUM_TILES);
 
     private BoardUtils() {
         throw new RuntimeException("BoardUtils class cannot be instantiated!");
     }
 
-    private static int[] initZobristTable(final int size) {
-        Set<Integer> uniqueValues = new HashSet<>();
-        Random random = new Random();
+    private static long[] initZobristTable(final int size) {
+        Set<Long> uniqueValues = new HashSet<>();
+        Random random = new Random(31);
+
+        int min = 2;
 
         while (uniqueValues.size() < size) {
-            uniqueValues.add(random.nextInt());
+            uniqueValues.add(random.nextLong(Long.MAX_VALUE - min + 1) + min);
         }
 
-        return uniqueValues.stream().mapToInt(Integer::intValue).toArray();
+        return uniqueValues.stream().mapToLong(Long::longValue).toArray();
     }
 
     private static boolean[] initWall(final int alliance) {

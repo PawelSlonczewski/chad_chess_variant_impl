@@ -1,9 +1,14 @@
 package com.pslonczewski.chad_chess_variant_impl;
 
-import com.pslonczewski.chad_chess_variant_impl.engine.board.Board;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.pslonczewski.chad_chess_variant_impl.gui.Table;
 
+
 public class JChess {
+
+    private static final Logger logger = LogManager.getLogger(JChess.class);
 
     public static void main(String[] args) {
 
@@ -12,5 +17,6 @@ public class JChess {
 //        System.out.println(board);
 
         Table.get().show();
+
     }
 }

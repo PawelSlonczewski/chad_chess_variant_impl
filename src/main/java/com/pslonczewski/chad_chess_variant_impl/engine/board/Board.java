@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.pslonczewski.chad_chess_variant_impl.engine.Alliance;
 import com.pslonczewski.chad_chess_variant_impl.engine.pieces.*;
+import com.pslonczewski.chad_chess_variant_impl.engine.pieces.Piece.PieceType;
 import com.pslonczewski.chad_chess_variant_impl.engine.player.BlackPlayer;
 import com.pslonczewski.chad_chess_variant_impl.engine.player.Player;
 import com.pslonczewski.chad_chess_variant_impl.engine.player.WhitePlayer;
@@ -21,6 +22,7 @@ public class Board {
     private final WhitePlayer whitePlayer;
     private final BlackPlayer blackPlayer;
     private final Player currentPlayer;
+    private final long zobristHashCode;
 
     private Board(final Builder builder) {
         this.gameBoard = createGameBoard(builder);
@@ -34,6 +36,22 @@ public class Board {
         this.blackPlayer = new BlackPlayer(this, whiteStandardLegalMoves, blackStandardLegalMoves);
 
         this.currentPlayer = builder.nextMoveMaker.choosePlayer(this.whitePlayer, this.blackPlayer);
+
+        this.zobristHashCode = calculateZobristHashCode(this.whitePieces, this.blackPieces, this.currentPlayer);
+        System.out.println("[FROM CONSTRUCTOR] Hash code for this board: " + this.zobristHashCode);
+    }
+
+    private long calculateZobristHashCode(Collection<Piece> whitePieces, Collection<Piece> blackPieces, Player currentPlayer) {
+        long hash = 0L;
+        for (final Piece piece : Iterables.concat(whitePieces, blackPieces)) {
+            int tileCoordinate = piece.getPiecePosition() * PieceType.values().length * 2;
+            int pieceAlliance = piece.getPieceAlliance() == Alliance.WHITE ? 0 : 3;
+            int pieceType = piece.getPieceType() == PieceType.ROOK ? 0
+                            : piece.getPieceType() == PieceType.QUEEN ? 1 : 2;
+            hash ^= BoardUtils.ZOBRIST_TABLE[tileCoordinate + pieceAlliance + pieceType];
+        }
+
+        return (hash ^ (currentPlayer.getAlliance().isWhite() ? 0 : 1)) /* & 0x7FFFFFFFFFFFFFFFL */;
     }
 
     @Override
@@ -76,6 +94,10 @@ public class Board {
     public Collection<Piece> getAllPieces() {
         return Stream.concat(this.whitePieces.stream(),
                 this.blackPieces.stream()).collect(Collectors.toList());
+    }
+
+    public boolean isADraw() {
+        return this.getAllPieces().size() == 2;
     }
 
     private Collection<Move> calculateLegalMoves(final Collection<Piece> pieces) {
@@ -153,6 +175,10 @@ public class Board {
         return Iterables.unmodifiableIterable(
                 Iterables.concat(this.whitePlayer.getLegalMoves(), this.blackPlayer.getLegalMoves())
         );
+    }
+
+    public long getZobristHashCode() {
+        return this.zobristHashCode;
     }
 
     public static class Builder {

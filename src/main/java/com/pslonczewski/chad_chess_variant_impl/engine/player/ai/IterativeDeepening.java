@@ -60,7 +60,7 @@ public class IterativeDeepening implements MoveStrategy {
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
 
-        while (currentDepth < depth) {
+        while (currentDepth <= depth) {
             int currentValue;
             final List<MoveScoreRecord> records = builder.build();
             builder = new MoveOrderingBuilder();
@@ -70,9 +70,9 @@ public class IterativeDeepening implements MoveStrategy {
                 final MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
                 if (moveTransition.getMoveStatus().isDone()) {
                     currentValue = board.getCurrentPlayer().getAlliance().isWhite()
-                            ? min(moveTransition.getTransitionBoard(), depth - 1,
+                            ? min(moveTransition.getTransitionBoard(), currentDepth - 1,
                             alpha, beta)
-                            : max(moveTransition.getTransitionBoard(), depth - 1,
+                            : max(moveTransition.getTransitionBoard(), currentDepth - 1,
                             alpha, beta);
                     builder.addMoveOrderingRecord(move, currentValue);
                     if (board.getCurrentPlayer().getAlliance().isWhite() && currentValue > alpha) {

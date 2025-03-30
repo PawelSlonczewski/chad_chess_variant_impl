@@ -22,15 +22,11 @@ class BoardTest {
         assertEquals(54, board.getCurrentPlayer().getOpponent().getLegalMoves().size());
         assertFalse(board.getCurrentPlayer().isInCheck());
         assertFalse(board.getCurrentPlayer().isInCheckMate());
-//        assertTrue(board.getCurrentPlayer().isKingSideCastleCapable());
-//        assertTrue(board.getCurrentPlayer().isQueenSideCastleCapable());
         assertEquals(board.getCurrentPlayer(), board.getWhitePlayer());
 
         assertEquals(board.getCurrentPlayer().getOpponent(), board.getBlackPlayer());
         assertFalse(board.getCurrentPlayer().getOpponent().isInCheck());
         assertFalse(board.getCurrentPlayer().getOpponent().isInCheckMate());
-//        assertTrue(board.getCurrentPlayer().getOpponent().isKingSideCastleCapable());
-//        assertTrue(board.getCurrentPlayer().getOpponent().isQueenSideCastleCapable());
         assertEquals("White", board.getWhitePlayer().toString());
         assertEquals("Black", board.getBlackPlayer().toString());
 
@@ -45,8 +41,8 @@ class BoardTest {
 
         assertEquals(108, Iterables.size(allMoves));
         assertEquals(18, Iterables.size(allPieces));
-//      assertFalse(BoardUtils.isEndGame(board));
-//      assertFalse(BoardUtils.isThreatenedBoardImmediate(board));
+//        assertFalse(BoardUtils.isEndGame(board));
+//        assertFalse(BoardUtils.isThreatenedBoardImmediate(board));
 //        assertEquals(StandardBoardEvaluator.get().evaluate(board, 0), 0);
         assertEquals(King.class, board.getPiece(44).getClass());
     }
