@@ -88,7 +88,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
                             : max(moveTransition.getTransitionBoard(), depth - 1,
                             alpha, beta);
 
-                    this.rememberedBoards.put(boardHexString, new BoardState(depth - 1, currentValue));
+                    this.rememberedBoards.put(boardHexString, new BoardState(depth - 1, currentValue, 0));
                 }
 
                 if (board.getCurrentPlayer().getAlliance().isWhite() && currentValue > alpha) {
@@ -103,7 +103,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
         String topBoardHexString = Long.toHexString(board.getZobristHashCode());
         this.rememberedBoards.put(topBoardHexString, new BoardState(depth,
                                                                     board.getCurrentPlayer().getAlliance().isWhite()
-                                                                    ? alpha : beta));
+                                                                    ? alpha : beta, 0));
         logger.info("Boards' hash added: " + topBoardHexString + " on depth: " + depth);
         long endTime = System.currentTimeMillis() - startTime;
         System.out.println("Time elapsed: " + endTime / 1000 + " s");
@@ -122,7 +122,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
         if (depth == 0 || BoardUtils.isEndGameScenario(board)) {
             this.boardsEvaluated++;
             int evaluation = this.evaluator.evaluate(board, depth);
-            this.rememberedBoards.put(boardHexString, new BoardState(depth, evaluation)); /* TODO Check if depth on end game scenario changes anything!!! */
+            this.rememberedBoards.put(boardHexString, new BoardState(depth, evaluation, 0)); /* TODO Check if depth on end game scenario changes anything!!! */
             return evaluation;
         }
 
@@ -142,7 +142,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
                         int moveScore = max(moveTransition.getTransitionBoard(), depth - 1,
                                 alpha, beta);
                         beta = Math.min(beta, moveScore);
-                        this.rememberedBoards.put(zobristHexHashCode, new BoardState(depth - 1, moveScore));
+                        this.rememberedBoards.put(zobristHexHashCode, new BoardState(depth - 1, moveScore, 0));
                         logger.info("Boards' hash added: " + zobristHexHashCode + " on depth: " + (depth - 1));
                     }
 
@@ -168,7 +168,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
         if (depth == 0 || BoardUtils.isEndGameScenario(board)) {
             this.boardsEvaluated++;
             int evaluation = this.evaluator.evaluate(board, depth);
-            this.rememberedBoards.put(boardHexString, new BoardState(0, evaluation));
+            this.rememberedBoards.put(boardHexString, new BoardState(0, evaluation, 0));
             return evaluation;
         }
 
@@ -189,7 +189,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
                         int moveScore = min(moveTransition.getTransitionBoard(), depth - 1,
                                 alpha, beta);
                         alpha = Math.max(alpha, moveScore);
-                        this.rememberedBoards.put(zobristHexHashCode, new BoardState(depth - 1, moveScore));
+                        this.rememberedBoards.put(zobristHexHashCode, new BoardState(depth - 1, moveScore, 0));
                         logger.info("Boards' hash added: " + zobristHexHashCode + " on depth: " + (depth - 1));
                     }
                     if (beta <= alpha) {

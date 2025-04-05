@@ -1,16 +1,23 @@
 package com.pslonczewski.chad_chess_variant_impl.engine.player.ai;
 
-import com.google.common.collect.Ordering;
-import com.google.common.primitives.Ints;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.*;
+import lombok.extern.log4j.Log4j2;
 
+import java.time.Duration;
 import java.util.*;
 
-public class IterativeDeepening implements MoveStrategy {
+@Log4j2
+public class IterativeDeepeningTimeDependent implements MoveStrategy {
     private MoveSorter moveSorter = MoveSorter.SORT;
     private BoardEvaluator evaluator = new StandardBoardEvaluator();
     private long boardsEvaluated = 0;
+    private long timer;
+    private Thread timerThread;
+    private Thread mainThread = Thread.currentThread();
 
+    public IterativeDeepeningTimeDependent(long timer) {
+        this.timer = timer;
+    }
 
     private enum MoveSorter {
 
@@ -48,6 +55,19 @@ public class IterativeDeepening implements MoveStrategy {
     public Move execute(Board board, int depth) {
         System.out.println(board.getCurrentPlayer() + " THINKING with depth = " + depth);
 
+        this.timerThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(Duration.ofSeconds(timer).toMillis());
+                } catch (InterruptedException e) {
+                    log.info("Timer was not needed");
+                }
+                mainThread.interrupt();
+            }
+        });
+        timerThread.start();
+
         MoveOrderingBuilder builder = new MoveOrderingBuilder();
         builder.setOrder(board.getCurrentPlayer().getAlliance().isWhite() ? Ordering.DESC : Ordering.ASC);
         for(final Move move : board.getCurrentPlayer().getLegalMoves()) {
@@ -61,6 +81,12 @@ public class IterativeDeepening implements MoveStrategy {
         int beta = Integer.MAX_VALUE;
 
         while (currentDepth <= depth) {
+
+            if (Thread.currentThread().isInterrupted()) {
+                log.info("Method interrupted");
+                return bestMove == null ? bestMove : getDefaultMove(board);
+            }
+
             int currentValue;
             final List<MoveScoreRecord> records = builder.build();
             builder = new MoveOrderingBuilder();
@@ -85,19 +111,37 @@ public class IterativeDeepening implements MoveStrategy {
                 }
             }
             currentDepth++;
+
             alpha = Integer.MIN_VALUE;
             beta = Integer.MAX_VALUE;
+
+            if (Thread.currentThread().isInterrupted()) {
+                log.info("Method interrupted");
+                return bestMove == null ? bestMove : getDefaultMove(board);
+            }
         }
+        timerThread.interrupt();
         return bestMove;
     }
 
     private int min(final Board board, final int depth, final int alpha, int beta) {
+
+        if (Thread.currentThread().isInterrupted()) {
+            log.info("Method interrupted");
+            return beta;
+        }
+
         if (depth == 0 || BoardUtils.isEndGameScenario(board)) {
             this.boardsEvaluated++;
             return this.evaluator.evaluate(board, depth);
         }
 
         for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves())) {
+            if (Thread.currentThread().isInterrupted()) {
+                log.info("Method interrupted");
+                return beta;
+            }
+
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
                 if (depth == 1 && move.isAttack()) {
@@ -118,12 +162,24 @@ public class IterativeDeepening implements MoveStrategy {
     }
 
     private int max(final Board board, final int depth, int alpha, final int beta) {
+
+        if (Thread.currentThread().isInterrupted()) {
+            log.info("Method interrupted");
+            return alpha;
+        }
+
         if (depth == 0 || BoardUtils.isEndGameScenario(board)) {
             this.boardsEvaluated++;
             return this.evaluator.evaluate(board, depth);
         }
 
         for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves())) {
+
+            if (Thread.currentThread().isInterrupted()) {
+                log.info("Method interrupted");
+                return alpha;
+            }
+
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
                 if (depth == 1 && move.isAttack()) {
@@ -152,11 +208,17 @@ public class IterativeDeepening implements MoveStrategy {
             return this.evaluator.evaluate(board, 0);
         } else {
             for (Move move : attackMoves) {
+
+                if (Thread.currentThread().isInterrupted()) {
+                    log.info("Method interrupted");
+                    return beta;
+                }
+
                 MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
                 if (moveTransition.getMoveStatus().isDone()) {
                     beta = Math.min(beta,
                             quietMax(moveTransition.getTransitionBoard(),
-                                    alpha, beta));
+                                     alpha, beta));
                     if (beta <= alpha) {
                         break;
                     }
@@ -176,6 +238,12 @@ public class IterativeDeepening implements MoveStrategy {
             return this.evaluator.evaluate(board, 0);
         } else {
             for (Move move : attackMoves) {
+
+                if (Thread.currentThread().isInterrupted()) {
+                    log.info("Method interrupted");
+                    return beta;
+                }
+
                 MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
                 if (moveTransition.getMoveStatus().isDone()) {
                     alpha = Math.max(alpha, quietMin(moveTransition.getTransitionBoard(), alpha, beta));
@@ -190,7 +258,7 @@ public class IterativeDeepening implements MoveStrategy {
 
     @Override
     public String toString() {
-        return "IterativeDeepening";
+        return "AlphaBetaPruning";
     }
 
     private static class MoveScoreRecord implements Comparable<MoveScoreRecord> {
@@ -272,5 +340,10 @@ public class IterativeDeepening implements MoveStrategy {
         List<MoveScoreRecord> build() {
             return this.ordering.order(moveScoreRecords);
         }
+    }
+
+    private Move getDefaultMove(Board board) {
+        Collection<Move> legalMoves = board.getCurrentPlayer().getLegalMoves();
+        return legalMoves.isEmpty() ? null : legalMoves.stream().findFirst().get();
     }
 }

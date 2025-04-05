@@ -38,7 +38,7 @@ public class Board {
         this.currentPlayer = builder.nextMoveMaker.choosePlayer(this.whitePlayer, this.blackPlayer);
 
         this.zobristHashCode = calculateZobristHashCode(this.whitePieces, this.blackPieces, this.currentPlayer);
-        System.out.println("[FROM CONSTRUCTOR] Hash code for this board: " + this.zobristHashCode);
+//        System.out.println("[FROM CONSTRUCTOR] Hash code for this board: " + this.zobristHashCode);
     }
 
     private long calculateZobristHashCode(Collection<Piece> whitePieces, Collection<Piece> blackPieces, Player currentPlayer) {

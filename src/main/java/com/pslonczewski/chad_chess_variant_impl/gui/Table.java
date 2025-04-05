@@ -40,6 +40,7 @@ public class Table extends Observable {
     private Piece humanMovedPiece;
     private BoardDirection boardDirection;
     private AtomicBoolean MOVE_FLAG = new AtomicBoolean(false);
+    private List<String> boardHistory = new ArrayList<>();
 
     private Move computerMove;
 
@@ -66,6 +67,7 @@ public class Table extends Observable {
         this.gameFrame.setSize(OUTER_FRAME_DIMENSION);
 
         this.chessBoard = Board.createStandardBoard();
+        this.boardHistory.add(Long.toHexString(this.chessBoard.getZobristHashCode()));
         this.gameHistoryPanel = new GameHistoryPanel();
         this.takenPiecesPanel = new TakenPiecesPanel();
         this.boardPanel = new BoardPanel();
@@ -179,6 +181,17 @@ public class Table extends Observable {
         notifyObservers(gameSetup);
     }
 
+    boolean isThreefoldRepetition() {
+        Map<String, Integer> counts = new HashMap<>();
+        for (String state : this.boardHistory) {
+            counts.put(state, counts.getOrDefault(state, 0) + 1);
+            if (counts.get(state) >= 3) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static class TableGameAIWatcher implements Observer {
 
         @Override
@@ -209,11 +222,18 @@ public class Table extends Observable {
                         JOptionPane.INFORMATION_MESSAGE);
             }
 
+            if (get().isThreefoldRepetition()) {
+                JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
+                        "Game Over: Draw Three Fold Repetition", "Game Over",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+
 
         }
     }
 
     public void updateGameBoard(final Board board) {
+        this.boardHistory.add(Long.toHexString(board.getZobristHashCode()));
         this.chessBoard = board;
     }
 
@@ -266,9 +286,14 @@ public class Table extends Observable {
 //            return iterativeDeepeningWithPruning.execute(Table.get().getGameBoard(),
 //                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            final MoveStrategy alphaBetaPrunWithTable = new AlphaBetaPruningWithMoveSorterAndTranspositionTable(rememberedBoards);
+//            final MoveStrategy alphaBetaPrunWithTable = new AlphaBetaPruningWithMoveSorterAndTranspositionTable(rememberedBoards);
+//
+//            return alphaBetaPrunWithTable.execute(Table.get().getGameBoard(),
+//                                                  Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            return alphaBetaPrunWithTable.execute(Table.get().getGameBoard(),
+            final MoveStrategy iterativeDeepeningTimeDependent = new IterativeDeepeningTimeDependent(30);
+
+            return iterativeDeepeningTimeDependent.execute(Table.get().getGameBoard(),
                     Table.get().getGameSetup().getSearchDepthSpinnerValue());
         }
 
@@ -388,7 +413,7 @@ public class Table extends Observable {
 
                             final MoveTransition transition = chessBoard.getCurrentPlayer().makeMove(move);
                             if (transition.getMoveStatus().isDone()) {
-                                chessBoard = transition.getTransitionBoard();
+                                updateGameBoard(transition.getTransitionBoard());
                                 moveLog.addMove(move);
                                 MOVE_FLAG.set(true);
                             }
