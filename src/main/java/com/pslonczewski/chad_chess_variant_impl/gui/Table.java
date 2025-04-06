@@ -291,7 +291,12 @@ public class Table extends Observable {
 //            return alphaBetaPrunWithTable.execute(Table.get().getGameBoard(),
 //                                                  Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            final MoveStrategy iterativeDeepeningTimeDependent = new IterativeDeepeningTimeDependent(30);
+//            final MoveStrategy iterativeDeepeningTimeDependent = new IterativeDeepeningTimeDependent(30);
+//
+//            return iterativeDeepeningTimeDependent.execute(Table.get().getGameBoard(),
+//                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
+
+            final MoveStrategy iterativeDeepeningTimeDependent = new IterativeDeepeningWithTranspositionTableTimeDependent(rememberedBoards, 30);
 
             return iterativeDeepeningTimeDependent.execute(Table.get().getGameBoard(),
                     Table.get().getGameSetup().getSearchDepthSpinnerValue());
