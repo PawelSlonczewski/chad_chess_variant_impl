@@ -8,9 +8,18 @@ public final class MajorMove extends Move {
         super(board, movedPiece, destinationCoordinate);
     }
 
+    public MajorMove(MajorMove other) {
+        super(other.board, other.movedPiece, other.destinationCoordinate);
+    }
+
     @Override
     public boolean equals(final Object other) {
         return this == other || other instanceof MajorMove && super.equals(other);
+    }
+
+    @Override
+    public Move copy() {
+        return new MajorMove(this);
     }
 
     @Override

@@ -111,4 +111,6 @@ public abstract class Move {
             return NULL_MOVE;
         }
     }
+
+    public abstract Move copy();
 }

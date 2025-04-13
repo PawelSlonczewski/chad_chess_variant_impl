@@ -178,10 +178,11 @@ public class BoardUtils {
 
     public static boolean isEndGameScenario(final Board board) {
         return board.getCurrentPlayer().isInCheckMate()
-                || board.getCurrentPlayer().isInStaleMate();
+                || board.getCurrentPlayer().isInStaleMate()
+                || board.isADraw();
     }
 
     public static boolean isThreatenedBoardImmediate(final Board board) {
-        return board.getWhitePlayer().isInCheckMate() | board.getBlackPlayer().isInCheckMate();
+        return board.getWhitePlayer().isInCheckMate() || board.getBlackPlayer().isInCheckMate();
     }
 }

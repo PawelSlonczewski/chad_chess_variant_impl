@@ -12,6 +12,11 @@ public class AttackMove extends Move {
         this.attackedPiece = attackedPiece;
     }
 
+    public AttackMove(AttackMove other) {
+        super(other.board, other.movedPiece, other.destinationCoordinate);
+        this.attackedPiece = other.attackedPiece;
+    }
+
     @Override
     public boolean isAttack() {
         return true;
@@ -20,6 +25,11 @@ public class AttackMove extends Move {
     @Override
     public Piece getAttackedPiece() {
         return this.attackedPiece;
+    }
+
+    @Override
+    public Move copy() {
+        return new AttackMove(this);
     }
 
     @Override

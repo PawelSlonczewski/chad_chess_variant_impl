@@ -15,6 +15,12 @@ public class RookPromotion extends Move {
         this.promotedRook = (Rook)decoratedMove.getMovedPiece();
     }
 
+    public RookPromotion(RookPromotion other) {
+        super(other.getBoard(), other.getMovedPiece(), other.getDestinationCoordinate());
+        this.decoratedMove = other.decoratedMove;
+        this.promotedRook = other.promotedRook;
+    }
+
     @Override
     public int hashCode() {
         return decoratedMove.hashCode() + (31 * promotedRook.hashCode());
@@ -43,6 +49,11 @@ public class RookPromotion extends Move {
         builder.setMoveMaker(pawnMovedBoard.getCurrentPlayer().getAlliance());
 
         return builder.build();
+    }
+
+    @Override
+    public Move copy() {
+        return new RookPromotion(this);
     }
 
     @Override
