@@ -146,7 +146,7 @@ public class MonteCarloTreeSearch implements MoveStrategy {
                     return child;
                 }
                 double score = (child.totalReward / child.visits)
-                               + EXPLORATION_CONSTANT * Math.sqrt(Math.log((double) this.visits / child.visits));
+                               + EXPLORATION_CONSTANT * Math.sqrt(Math.log(this.visits) / (double) child.visits);
                 if (score > bestScore) {
                     bestChild = child;
                     bestScore = score;
