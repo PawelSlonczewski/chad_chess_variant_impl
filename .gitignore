@@ -1,3 +1,5 @@
 .idea/
 target/
 app.log
+*.png
+*.svg

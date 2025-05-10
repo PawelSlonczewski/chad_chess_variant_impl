@@ -271,15 +271,16 @@ public class Table extends Observable {
         @Override
         protected Move doInBackground() throws Exception {
 
+            int spinnerDepthValue = Table.get().getGameSetup().getSearchDepthSpinnerValue();
+
 //            final MoveStrategy miniMax = new MiniMax();
 //
 //            return miniMax.execute(Table.get().getGameBoard(),
 //                                   Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-//            final MoveStrategy alphaBetaPrun = new AlphaBetaPruningWithMoveSorter();
-//
-//            return alphaBetaPrun.execute(Table.get().getGameBoard(),
-//                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
+            final MoveStrategy alphaBetaPrun = new AlphaBetaPruningWithMoveSorter(spinnerDepthValue);
+
+            return alphaBetaPrun.execute(Table.get().getGameBoard(), spinnerDepthValue);
 
 //            final MoveStrategy iterativeDeepeningWithPruning = new IterativeDeepening();
 //
@@ -301,12 +302,12 @@ public class Table extends Observable {
 //            return iterativeDeepeningTimeDependent.execute(Table.get().getGameBoard(),
 //                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            final MoveStrategy monteCarloTreeSearch = new MonteCarloTreeSearch(Table.get().getGameBoard(),
-                                                                               Table.get().getGameSetup()
-                                                                                    .getTimeSpinnerSpinnerValue());
-
-            return monteCarloTreeSearch.execute(Table.get().getGameBoard(),
-                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
+//            final MoveStrategy monteCarloTreeSearch = new MonteCarloTreeSearch(Table.get().getGameBoard(),
+//                                                                               Table.get().getGameSetup()
+//                                                                                    .getTimeSpinnerSpinnerValue());
+//
+//            return monteCarloTreeSearch.execute(Table.get().getGameBoard(),
+//                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
         }
 
         @Override
