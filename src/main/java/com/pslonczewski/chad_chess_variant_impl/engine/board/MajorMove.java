@@ -24,7 +24,8 @@ public final class MajorMove extends Move {
 
     @Override
     public String toString() {
-        return movedPiece.getPieceType().toString() + BoardUtils.getPositionAtCoordinate(this.destinationCoordinate);
+        return BoardUtils.getPositionAtCoordinate(movedPiece.getPiecePosition()).toUpperCase()
+                + "-" + BoardUtils.getPositionAtCoordinate(this.destinationCoordinate).toUpperCase();
     }
 
 }

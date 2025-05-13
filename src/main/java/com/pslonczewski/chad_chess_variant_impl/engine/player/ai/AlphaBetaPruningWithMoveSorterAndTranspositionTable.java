@@ -19,36 +19,66 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
     private final BoardEvaluator evaluator = new StandardBoardEvaluator();
     private final MoveSorter moveSorter = MoveSorter.SORT;;
     private final Map<String, BoardState> rememberedBoards;
+    private Move[][] killerMoves;
+    private final int depth;
 
-    public AlphaBetaPruningWithMoveSorterAndTranspositionTable(final Map<String, BoardState> rememberedBoards) {
+    public AlphaBetaPruningWithMoveSorterAndTranspositionTable(final Map<String, BoardState> rememberedBoards,
+                                                               final int depth) {
         this.rememberedBoards = rememberedBoards;
+        this.depth = depth;
+        this.killerMoves = new Move[this.depth][2];
     }
 
     private enum MoveSorter {
 
         SORT {
             @Override
-            Collection<Move> sort(final Collection<Move> moves) {
-                return Ordering.from(mvvLva).immutableSortedCopy(moves);
+            Collection<Move> sort(final Collection<Move> moves, final int depth, final Move[][] killerMoves) {
+                return Ordering.from(new Comparator<Move>() {
+
+                    @Override
+                    public int compare(Move move1, Move move2) {
+                        if (move1.isAttack() && !move2.isAttack()) {
+                            return -1;
+                        }
+                        if (!move1.isAttack() && move2.isAttack()) {
+                            return 1;
+                        }
+
+                        if (move1.isAttack()) {
+                            int attackingPieceMove1 = move1.getMovedPiece().getPieceValue();
+                            int attackedPieceMove1 = move1.getAttackedPiece().getPieceValue();
+                            int attackingPieceMove2 = move2.getMovedPiece().getPieceValue();
+                            int attackedPieceMove2 = move2.getAttackedPiece().getPieceValue();
+
+                            return (attackedPieceMove2 - attackingPieceMove2)
+                                    - (attackedPieceMove1 - attackingPieceMove1);
+                        }
+
+                        boolean m1Killer = isKiller(move1, depth, killerMoves);
+                        boolean m2Killer = isKiller(move2, depth, killerMoves);
+
+                        if (m1Killer) {
+                            log.info("");
+                        }
+                        if (m2Killer) {
+                            log.info("Killer move found!");
+                        }
+
+                        if (m1Killer && !m2Killer) return -1;
+                        if (!m1Killer && m2Killer) return 1;
+                        return 0;
+                    }
+
+                    private boolean isKiller(final Move move, final int depth, final Move[][] killerMoves) {
+                        return move.equals(killerMoves[depth - 1][0]) || move.equals(killerMoves[depth - 1][1]);
+                    }
+                }).immutableSortedCopy(moves);
             }
+
         };
 
-        public static Comparator<Move> mvvLva = new Comparator<Move>() {
-            @Override
-            public int compare(final Move move1, final Move move2) {
-                if (!(move1 instanceof MajorAttackMove) && !(move2 instanceof MajorAttackMove)) {
-                    return 0;
-                } else if (!(move1 instanceof MajorAttackMove)) {
-                    return 1;
-                } else if (!(move2 instanceof MajorAttackMove)) {
-                    return -1;
-                }
-                return (move2.getAttackedPiece().getPieceValue() - move2.getMovedPiece().getPieceValue())
-                        - (move1.getAttackedPiece().getPieceValue() - move1.getMovedPiece().getPieceValue());
-            }
-        };
-
-        abstract Collection<Move> sort(Collection<Move> moves);
+        abstract Collection<Move> sort(Collection<Move> moves, final int depth, final Move[][] killerMoves);
     }
 
     @Override
@@ -71,7 +101,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
 
         System.out.println(board.getCurrentPlayer() + " THINKING with depth = " + depth);
 
-        for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves())) {
+        for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves(), depth, this.killerMoves)) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
                 String boardHexString = Long.toHexString(moveTransition.getTransitionBoard().getZobristHashCode());
@@ -104,6 +134,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
                                                                     ? alpha : beta));
         log.info("Boards' hash added: " + topBoardHexString + " on depth: " + depth);
         long endTime = System.currentTimeMillis() - startTime;
+        System.out.println("The best move was: " + bestMove);
         System.out.println("Time elapsed: " + endTime / 1000 + " s");
 
         return bestMove;
@@ -124,7 +155,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
             return evaluation;
         }
 
-        for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves())) {
+        for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves(), depth, this.killerMoves)) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             String zobristHexHashCode = Long.toHexString(moveTransition.getTransitionBoard().getZobristHashCode());
             if (this.rememberedBoards.containsKey(zobristHexHashCode)
@@ -145,6 +176,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
                     }
 
                     if (beta <= alpha) {
+                        this.storeKillerMove(move, depth);
                         break;
                     }
                 }
@@ -170,7 +202,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
             return evaluation;
         }
 
-        for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves())) {
+        for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves(), depth, this.killerMoves)) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             String zobristHexHashCode = Long.toHexString(moveTransition.getTransitionBoard().getZobristHashCode());
             if (this.rememberedBoards.containsKey(zobristHexHashCode)
@@ -193,6 +225,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
                 }
             }
             if (beta <= alpha) {
+                this.storeKillerMove(move, depth);
                 break;
             }
         }
@@ -203,7 +236,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
         List<Move> attackMoves = this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves()
                                                       .stream()
                                                       .filter(Move::isAttack)
-                                                      .toList())
+                                                      .toList(), -1, this.killerMoves)
                                                 .stream().toList();
         if (attackMoves.isEmpty()) {
             return this.evaluator.evaluate(board, 0);
@@ -227,7 +260,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
         List<Move> attackMoves = this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves()
                                                       .stream()
                                                       .filter(Move::isAttack)
-                                                      .toList())
+                                                      .toList(), -1, this.killerMoves)
                                                 .stream().toList();
         if (attackMoves.isEmpty()) {
             return this.evaluator.evaluate(board, 0);
@@ -244,6 +277,18 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
         }
         return alpha;
     }
+
+    private void storeKillerMove(final Move move, final int depth) {
+        if (move.isAttack()) {
+            return;
+        }
+
+        if (!move.equals(this.killerMoves[depth][0])) {
+            this.killerMoves[depth - 1][1] = this.killerMoves[depth][0];
+            this.killerMoves[depth - 1][0] = move;
+        }
+    }
+
 
     @Override
     public String toString() {

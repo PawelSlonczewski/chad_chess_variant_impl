@@ -74,7 +74,7 @@ public class MiniMax implements MoveStrategy {
         }
         this.executionTime = (System.currentTimeMillis() / 1000) - startTime;
 
-        System.out.printf("%s SELECTS %s [#boards = %d, time taken = %d ms, rate = %.1f\n",
+        System.out.printf("%s SELECTS %s [#boards = %d, time taken = %d s, rate = %.1f\n",
                 board.getCurrentPlayer(), bestMove, this.boardsEvaluated, this.executionTime,
                 (1000 * ((double)this.boardsEvaluated/this.executionTime)));
 

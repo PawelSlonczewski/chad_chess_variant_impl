@@ -33,20 +33,20 @@ public class RookPromotion extends Move {
 
     @Override
     public Board execute() {
-        final Board pawnMovedBoard = this.decoratedMove.execute();
+        final Board rookMovedBoard = this.decoratedMove.execute();
         final Builder builder = new Builder();
 
-        for (final Piece piece : pawnMovedBoard.getCurrentPlayer().getActivePieces()) {
+        for (final Piece piece : rookMovedBoard.getCurrentPlayer().getActivePieces()) {
             if (!this.promotedRook.equals(piece)) {
                 builder.setPiece(piece);
             }
         }
 
-        for (final Piece piece : pawnMovedBoard.getCurrentPlayer().getOpponent().getActivePieces()) {
+        for (final Piece piece : rookMovedBoard.getCurrentPlayer().getOpponent().getActivePieces()) {
             builder.setPiece(piece);
         }
         builder.setPiece(this.promotedRook.getPromotionPiece().movePiece(this));
-        builder.setMoveMaker(pawnMovedBoard.getCurrentPlayer().getAlliance());
+        builder.setMoveMaker(rookMovedBoard.getCurrentPlayer().getAlliance());
 
         return builder.build();
     }
@@ -68,6 +68,6 @@ public class RookPromotion extends Move {
 
     @Override
     public String toString() {
-        return "";
+        return this.decoratedMove.toString() + " " + "Q" + (this.decoratedMove instanceof AttackMove ? "+" : "");
     }
 }

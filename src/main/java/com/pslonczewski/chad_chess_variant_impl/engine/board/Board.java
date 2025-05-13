@@ -171,6 +171,31 @@ public class Board {
         return builder.build();
     }
 
+    public static Board createProblem1Board() {
+        final Builder builder = new Builder();
+
+        builder.setPiece(new Rook(Alliance.BLACK, 26));
+        builder.setPiece(new Rook(Alliance.BLACK, 28));
+        builder.setPiece(new Rook(Alliance.BLACK, 33));
+        builder.setPiece(new Rook(Alliance.BLACK, 43));
+        builder.setPiece(new King(Alliance.BLACK, 44));
+        builder.setPiece(new Rook(Alliance.BLACK, 56));
+        builder.setPiece(new Rook(Alliance.BLACK, 57));
+        builder.setPiece(new Rook(Alliance.WHITE, 63));
+        builder.setPiece(new Rook(Alliance.WHITE, 86));
+        builder.setPiece(new Rook(Alliance.WHITE, 88));
+        builder.setPiece(new King(Alliance.WHITE, 98));
+        builder.setPiece(new Rook(Alliance.WHITE, 100));
+        builder.setPiece(new Rook(Alliance.BLACK, 105));
+        builder.setPiece(new Rook(Alliance.WHITE, 110));
+        builder.setPiece(new Rook(Alliance.WHITE, 114));
+        builder.setPiece(new Rook(Alliance.WHITE, 115));
+
+        builder.setMoveMaker(Alliance.WHITE);
+
+        return builder.build();
+    }
+
     public Iterable<Move> getAllLegalMoves() {
         return Iterables.unmodifiableIterable(
                 Iterables.concat(this.whitePlayer.getLegalMoves(), this.blackPlayer.getLegalMoves())

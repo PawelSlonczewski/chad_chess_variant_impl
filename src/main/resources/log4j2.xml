@@ -2,19 +2,19 @@
 <Configuration status="WARN">
     <Appenders>
         <!-- Console Appender -->
-        <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss} %-5p %c{1}:%L - %m%n"/>
-        </Console>
+<!--        <Console name="Console" target="SYSTEM_OUT">-->
+<!--            <PatternLayout pattern="%d{HH:mm:ss} %-5p %c{1}:%L - %m%n"/>-->
+<!--        </Console>-->
 
-        <!-- File Appender -->
-        <File name="File" fileName="app.log">
-            <PatternLayout pattern="%d{HH:mm:ss} %p %c{1}:%L: %m%n"/>
-        </File>
+<!--        &lt;!&ndash; File Appender &ndash;&gt;-->
+<!--        <File name="File" fileName="app.log">-->
+<!--            <PatternLayout pattern="%d{HH:mm:ss} %p %c{1}:%L: %m%n"/>-->
+<!--        </File>-->
     </Appenders>
 
     <Loggers>
         <!-- Root Logger Configuration -->
-        <Root level="info">
+        <Root level="off">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/> <!-- Uncomment to enable file logging -->
         </Root>

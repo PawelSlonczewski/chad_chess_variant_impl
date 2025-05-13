@@ -1,5 +1,6 @@
 package com.pslonczewski.chad_chess_variant_impl.engine.player.ai;
 
+import com.pslonczewski.chad_chess_variant_impl.engine.Alliance;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Board;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.BoardUtils;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.Move;
@@ -15,16 +16,16 @@ import java.util.Random;
 import java.util.stream.StreamSupport;
 
 @Log4j2
-public class MonteCarloTreeSearch implements MoveStrategy {
-
+public class MonteCarloTreeSearchHeuristics implements MoveStrategy{
     private final Random random = new Random(31);
-    private final Node root;
+    private Node root;
     private Thread mainThread;
     private final long timer;
+    private final BoardEvaluator evaluator;
 
-    public MonteCarloTreeSearch(final Board board, long timer) {
-        this.root = new Node(board, null, null);
+    public MonteCarloTreeSearchHeuristics(long timer) {
         this.timer = timer;
+        this.evaluator = new StandardBoardEvaluator();
     }
 
     @Override
@@ -34,11 +35,15 @@ public class MonteCarloTreeSearch implements MoveStrategy {
 
     @Override
     public Move execute(Board board, int depth) {
+        this.root = new Node(board, null, null, this.random);
         log.info("Monte carlo tree search THINKING for: {} seconds", this.timer);
         this.mainThread = Thread.currentThread();
+
+        Thread.interrupted();
+
         Thread timerThread = new Thread(() -> {
             try {
-                Thread.sleep(Duration.ofSeconds(30).toMillis());
+                Thread.sleep(Duration.ofSeconds(this.timer).toMillis());
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } finally {
@@ -74,9 +79,10 @@ public class MonteCarloTreeSearch implements MoveStrategy {
     private double simulate(Node node) {
         log.trace("Entering simulate");
         Board board = node.getBoard();
+        Alliance rootAlliance = root.getBoard().getCurrentPlayer().getAlliance();
         while (!BoardUtils.isEndGameScenario(board)) {
             List<Move> moves = StreamSupport.stream(board.getAllLegalMoves().spliterator(), false)
-                                            .toList();
+                    .toList();
             Move randomMove;
             MoveTransition moveTransition;
             do {
@@ -86,7 +92,7 @@ public class MonteCarloTreeSearch implements MoveStrategy {
             board = moveTransition.getTransitionBoard();
         }
 
-        return this.root.getBoard().getCurrentPlayer().getAlliance() == board.getCurrentPlayer().getAlliance() ? 0 : 1;
+        return this.evaluator.evaluate(board, 0); // TODO change depth
     }
 
     private void backpropagate(Node node, double reward) {
@@ -98,14 +104,16 @@ public class MonteCarloTreeSearch implements MoveStrategy {
 
     private Move getBestMove() {
         Node bestChild = null;
-        double bestScore = -1.0;
+        boolean b = this.root.getBoard().getCurrentPlayer().getAlliance() == Alliance.WHITE;
+        double bestScore = b ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
         for (Node child : root.getChildren()) {
             double score = child.getTotalReward() / child.getVisits();
-            if (score > bestScore) {
+            if (b ? score > bestScore : score < bestScore) {
                 bestScore = score;
                 bestChild = child;
             }
         }
+        System.out.println("Best move: " + bestChild.getMove());
         return bestChild != null ? bestChild.getMove() : null;
     }
 
@@ -120,14 +128,18 @@ public class MonteCarloTreeSearch implements MoveStrategy {
         private final List<Node> children = new ArrayList<>();
         @Getter(AccessLevel.NONE)
         private final List<Move> untriedMoves;
+        private final Alliance playerAlliance;
+        private final Random random;
         private int visits = 0;
         private double totalReward = 0.0;
 
-        public Node(Board board, Node parent, Move move) {
+        public Node(Board board, Node parent, Move move,  Random random) {
             this.board = board;
             this.parent = parent;
             this.move = move;
             this.untriedMoves = new ArrayList<>(board.getCurrentPlayer().getLegalMoves());
+            this.playerAlliance = board.getCurrentPlayer().getAlliance();
+            this.random = random;
         }
 
         public boolean isFullyExpanded() {
@@ -140,14 +152,15 @@ public class MonteCarloTreeSearch implements MoveStrategy {
 
         public Node selectChild() {
             Node bestChild = null;
-            double bestScore = Double.NEGATIVE_INFINITY;
+            boolean b = this.playerAlliance == Alliance.WHITE;
+            double bestScore = b ? Double.NEGATIVE_INFINITY: Double.POSITIVE_INFINITY;
             for (Node child : this.children) {
                 if (child.visits == 0) {
                     return child;
                 }
                 double score = (child.totalReward / child.visits)
-                               + EXPLORATION_CONSTANT * Math.sqrt(Math.log(this.visits) / (double) child.visits);
-                if (score > bestScore) {
+                        + EXPLORATION_CONSTANT * Math.sqrt(Math.log(this.visits) / (double) child.visits);
+                if (b ? score > bestScore : score < bestScore) {
                     bestChild = child;
                     bestScore = score;
                 }
@@ -158,7 +171,6 @@ public class MonteCarloTreeSearch implements MoveStrategy {
         public Node expand() {
             Move move;
             MoveTransition moveTransition;
-            Random random = new Random();
             do {
                 if (this.untriedMoves.isEmpty()) {
                     return null;
@@ -166,14 +178,14 @@ public class MonteCarloTreeSearch implements MoveStrategy {
                 move = untriedMoves.remove(random.nextInt(this.untriedMoves.size()));
                 moveTransition = board.getCurrentPlayer().makeMove(move);
             } while (!moveTransition.getMoveStatus().isDone());
-            Node child = new Node(moveTransition.getTransitionBoard(), this, move);
+            Node child = new Node(moveTransition.getTransitionBoard(), this, move, this.random);
             this.children.add(child);
             return child;
         }
 
         public void update(double reward) {
-            visits++;
-            totalReward += reward;
+            this.visits++;
+            this.totalReward += reward;
         }
     }
 }

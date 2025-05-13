@@ -66,7 +66,7 @@ public class Table extends Observable {
         this.gameFrame.setJMenuBar(tableMenuBar);
         this.gameFrame.setSize(OUTER_FRAME_DIMENSION);
 
-        this.chessBoard = Board.createStandardBoard();
+        this.chessBoard = Board.createProblem1Board();
         this.boardHistory.add(Long.toHexString(this.chessBoard.getZobristHashCode()));
         this.gameHistoryPanel = new GameHistoryPanel();
         this.takenPiecesPanel = new TakenPiecesPanel();
@@ -302,7 +302,7 @@ public class Table extends Observable {
 //            return iterativeDeepeningTimeDependent.execute(Table.get().getGameBoard(),
 //                    Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-//            final MoveStrategy monteCarloTreeSearch = new MonteCarloTreeSearch(Table.get().getGameBoard(),
+//            final MoveStrategy monteCarloTreeSearch = new MonteCarloTreeSearchNonHeuristics(Table.get().getGameBoard(),
 //                                                                               Table.get().getGameSetup()
 //                                                                                    .getTimeSpinnerSpinnerValue());
 //
@@ -446,7 +446,7 @@ public class Table extends Observable {
                                 }
 //                              }
                                 boardPanel.drawBoard(chessBoard);
-                                System.out.println("Board hash code: " + Long.toHexString(chessBoard.getZobristHashCode()));
+//                                System.out.println("Board hash code: " + Long.toHexString(chessBoard.getZobristHashCode()));
                             }
                         });
                     }

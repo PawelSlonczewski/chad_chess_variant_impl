@@ -13,7 +13,7 @@ public class IterativeDeepeningWithTranspositionTableTimeDependent implements Mo
     private long boardsEvaluated = 0;
     private long timer;
     private Thread timerThread;
-    private Thread mainThread = Thread.currentThread();
+    private Thread mainThread;
     private final Map<String, BoardState> rememberedBoards;
 
 
@@ -58,6 +58,14 @@ public class IterativeDeepeningWithTranspositionTableTimeDependent implements Mo
     public Move execute(Board board, int depth) {
         System.out.println(board.getCurrentPlayer() + " THINKING with depth = " + depth);
 
+        this.mainThread = Thread.currentThread();
+
+        Thread.interrupted();
+
+        if (this.timerThread != null && this.timerThread.isAlive()) {
+            this.timerThread.interrupt();
+        }
+
         this.timerThread = new Thread(() -> {
             try {
                 Thread.sleep(Duration.ofSeconds(timer).toMillis());
@@ -68,71 +76,79 @@ public class IterativeDeepeningWithTranspositionTableTimeDependent implements Mo
         });
         timerThread.start();
 
-        MoveOrderingBuilder builder = new MoveOrderingBuilder();
-        for (final Move move : board.getCurrentPlayer().getLegalMoves()) {
-            builder.addMoveOrderingRecord(move, 0);
-        }
-
-        Move bestMove = null;
-        int currentDepth = 1;
-
-        int alpha = Integer.MIN_VALUE;
-        int beta = Integer.MAX_VALUE;
-
-        while (currentDepth <= depth) {
-
-            if (Thread.currentThread().isInterrupted()) {
-                log.info("Method interrupted");
-                return bestMove != null ? bestMove : getDefaultMove(board);
+        try {
+            MoveOrderingBuilder builder = new MoveOrderingBuilder();
+            for (final Move move : board.getCurrentPlayer().getLegalMoves()) {
+                builder.addMoveOrderingRecord(move, 0);
             }
 
-            int currentValue;
-            final List<MoveScoreRecord> records = builder.build();
-            builder = new MoveOrderingBuilder();
-            for (final MoveScoreRecord record : records) {
-                final Move move = record.getMove();
-                final MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
-                if (moveTransition.getMoveStatus().isDone()) {
-                    String boardHexString = Long.toHexString(moveTransition.getTransitionBoard().getZobristHashCode());
-                    if (this.rememberedBoards.containsKey(boardHexString)
-                        && (currentDepth - 1) <= this.rememberedBoards.get(boardHexString).depth()) {
-                        currentValue = rememberedBoards.get(boardHexString).score();
-                        log.info("Board' hash found in remembered board: {}", boardHexString);
-                    } else {
-                        currentValue = board.getCurrentPlayer().getAlliance().isWhite()
-                                ? min(moveTransition.getTransitionBoard(), currentDepth - 1,
-                                alpha, beta)
-                                : max(moveTransition.getTransitionBoard(), currentDepth - 1,
-                                alpha, beta);
+            Move bestMove = null;
+            int currentDepth = 1;
 
-                        this.rememberedBoards.put(boardHexString, new BoardState(currentDepth - 1, currentValue));
-                    }
-                    builder.addMoveOrderingRecord(move, currentValue);
-                    if (board.getCurrentPlayer().getAlliance().isWhite() && currentValue > alpha) {
-                        alpha = currentValue;
-                        bestMove = move;
-                    } else if (board.getCurrentPlayer().getAlliance().isBlack() && currentValue < beta) {
-                        beta = currentValue;
-                        bestMove = move;
+            int alpha = Integer.MIN_VALUE;
+            int beta = Integer.MAX_VALUE;
+
+            while (currentDepth <= depth) {
+
+                if (Thread.currentThread().isInterrupted()) {
+                    log.info("Method interrupted");
+                    System.out.println("The best move was " + bestMove);
+                    return bestMove != null ? bestMove : getDefaultMove(board);
+                }
+
+                int currentValue;
+                final List<MoveScoreRecord> records = builder.build();
+                builder = new MoveOrderingBuilder();
+                for (final MoveScoreRecord record : records) {
+                    final Move move = record.getMove();
+                    final MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
+                    if (moveTransition.getMoveStatus().isDone()) {
+                        String boardHexString = Long.toHexString(moveTransition.getTransitionBoard().getZobristHashCode());
+                        if (this.rememberedBoards.containsKey(boardHexString)
+                                && (currentDepth - 1) <= this.rememberedBoards.get(boardHexString).depth()) {
+                            currentValue = rememberedBoards.get(boardHexString).score();
+                            log.info("Board' hash found in remembered board: {}", boardHexString);
+                        } else {
+                            currentValue = board.getCurrentPlayer().getAlliance().isWhite()
+                                    ? min(moveTransition.getTransitionBoard(), currentDepth - 1,
+                                    alpha, beta)
+                                    : max(moveTransition.getTransitionBoard(), currentDepth - 1,
+                                    alpha, beta);
+
+                            this.rememberedBoards.put(boardHexString, new BoardState(currentDepth - 1, currentValue));
+                        }
+                        builder.addMoveOrderingRecord(move, currentValue);
+                        if (board.getCurrentPlayer().getAlliance().isWhite() && currentValue > alpha) {
+                            alpha = currentValue;
+                            bestMove = move;
+                        } else if (board.getCurrentPlayer().getAlliance().isBlack() && currentValue < beta) {
+                            beta = currentValue;
+                            bestMove = move;
+                        }
                     }
                 }
+                currentDepth++;
+                String topBoardHexString = Long.toHexString(board.getZobristHashCode());
+                this.rememberedBoards.put(topBoardHexString, new BoardState(currentDepth,
+                        board.getCurrentPlayer().getAlliance().isWhite()
+                                ? alpha : beta));
+
+                alpha = Integer.MIN_VALUE;
+                beta = Integer.MAX_VALUE;
+
+                if (Thread.currentThread().isInterrupted()) {
+                    log.info("Method interrupted");
+                    System.out.println("The best move was " + bestMove);
+                    return bestMove != null ? bestMove : getDefaultMove(board);
+                }
             }
-            currentDepth++;
-            String topBoardHexString = Long.toHexString(board.getZobristHashCode());
-            this.rememberedBoards.put(topBoardHexString, new BoardState(depth,
-                    board.getCurrentPlayer().getAlliance().isWhite()
-                            ? alpha : beta));
-
-            alpha = Integer.MIN_VALUE;
-            beta = Integer.MAX_VALUE;
-
-            if (Thread.currentThread().isInterrupted()) {
-                log.info("Method interrupted");
-                return bestMove != null ? bestMove : getDefaultMove(board);
+            System.out.println("The best move was " + bestMove);
+            return bestMove;
+        } finally {
+            if (this.timerThread != null && !this.timerThread.isInterrupted()) {
+                this.timerThread.interrupt();
             }
         }
-        timerThread.interrupt();
-        return bestMove;
     }
 
     private int min(final Board board, final int depth, final int alpha, int beta) {
@@ -168,7 +184,7 @@ public class IterativeDeepeningWithTranspositionTableTimeDependent implements Mo
                     && this.rememberedBoards.get(zobristHexHashCode).depth() >= depth - 1) {
                 log.info("Boards' hash found in remembered board: " + zobristHexHashCode);
                 beta = Math.min(beta, this.rememberedBoards.get(zobristHexHashCode).score());
-            }else {
+            } else {
                 if (moveTransition.getMoveStatus().isDone()) {
                     if (depth == 1 && move.isAttack()) {
                         beta = Math.min(beta,
@@ -201,14 +217,14 @@ public class IterativeDeepeningWithTranspositionTableTimeDependent implements Mo
         if (this.rememberedBoards.containsKey(boardHexString)
                 && this.rememberedBoards.get(boardHexString).depth() >= depth) {
             log.info("Boards' hash found in remembered board: {}", boardHexString);
-            if (this.rememberedBoards.get(boardHexString).depth() > depth) {
-                return this.rememberedBoards.get(boardHexString).score();
-            }
+            return this.rememberedBoards.get(boardHexString).score();
         }
 
         if (depth == 0 || BoardUtils.isEndGameScenario(board)) {
             this.boardsEvaluated++;
-            return this.evaluator.evaluate(board, depth);
+            int evaluation = this.evaluator.evaluate(board, depth);
+            this.rememberedBoards.put(boardHexString, new BoardState(depth, evaluation));
+            return evaluation;
         }
 
         for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves())) {
