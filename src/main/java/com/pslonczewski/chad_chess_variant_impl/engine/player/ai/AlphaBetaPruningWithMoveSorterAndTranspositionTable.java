@@ -3,6 +3,7 @@ package com.pslonczewski.chad_chess_variant_impl.engine.player.ai;
 import com.google.common.collect.Ordering;
 import com.pslonczewski.chad_chess_variant_impl.JChess;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.*;
+import com.pslonczewski.chad_chess_variant_impl.engine.board.BoardState.NodeType;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +17,7 @@ import java.util.Map;
 public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements MoveStrategy {
 
     private long boardsEvaluated = 0;
-    private final BoardEvaluator evaluator = new StandardBoardEvaluator();
+    private final BoardEvaluator evaluator = new MyBoardEvaluator();
     private final MoveSorter moveSorter = MoveSorter.SORT;;
     private final Map<String, BoardState> rememberedBoards;
     private Move[][] killerMoves;
@@ -101,13 +102,15 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
 
         System.out.println(board.getCurrentPlayer() + " THINKING with depth = " + depth);
 
+        String topBoardHexString = Long.toHexString(board.getZobristHashCode());
+
         for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves(), depth, this.killerMoves)) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
                 String boardHexString = Long.toHexString(moveTransition.getTransitionBoard().getZobristHashCode());
                 if (this.rememberedBoards.containsKey(boardHexString)
-                        && (depth - 1) <= this.rememberedBoards.get(boardHexString).depth() ) {
-                    currentValue = rememberedBoards.get(boardHexString).score();
+                        && (depth - 1) <= this.rememberedBoards.get(boardHexString).depth()) {
+                    currentValue = this.rememberedBoards.get(boardHexString).score();
                     log.info("Board' hash found in remembered board: " + boardHexString);
                 } else {
                     currentValue = board.getCurrentPlayer().getAlliance().isWhite()
@@ -116,7 +119,7 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
                             : max(moveTransition.getTransitionBoard(), depth - 1,
                             alpha, beta);
 
-                    this.rememberedBoards.put(boardHexString, new BoardState(depth - 1, currentValue));
+                    this.rememberedBoards.put(boardHexString, new BoardState(depth - 1, currentValue, BoardState.getNodeType(alpha, beta, currentValue)));
                 }
 
                 if (board.getCurrentPlayer().getAlliance().isWhite() && currentValue > alpha) {
@@ -128,11 +131,6 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
                 }
             }
         }
-        String topBoardHexString = Long.toHexString(board.getZobristHashCode());
-        this.rememberedBoards.put(topBoardHexString, new BoardState(depth,
-                                                                    board.getCurrentPlayer().getAlliance().isWhite()
-                                                                    ? alpha : beta));
-        log.info("Boards' hash added: " + topBoardHexString + " on depth: " + depth);
         long endTime = System.currentTimeMillis() - startTime;
         System.out.println("The best move was: " + bestMove);
         System.out.println("Time elapsed: " + endTime / 1000 + " s");
@@ -140,95 +138,85 @@ public class AlphaBetaPruningWithMoveSorterAndTranspositionTable implements Move
         return bestMove;
     }
 
-    private int min(final Board board, final int depth, final int alpha, int beta) {
+    private int min(final Board board, final int depth, int alpha, int beta) {
         String boardHexString = Long.toHexString(board.getZobristHashCode());
         if (this.rememberedBoards.containsKey(boardHexString)
             && this.rememberedBoards.get(boardHexString).depth() >= depth) {
-            log.info("Boards' hash found in remembered board: " + boardHexString);
-            return this.rememberedBoards.get(boardHexString).score();
+            BoardState boardState = this.rememberedBoards.get(boardHexString);
+            switch (boardState.nodeType()) {
+                case EXACT: return boardState.score();
+                case LOWER: alpha = Math.max(alpha, boardState.score()); break;
+                case UPPER: beta = Math.min(beta, boardState.score()); break;
+            }
+            if (alpha >= beta) return boardState.nodeType() == NodeType.LOWER ? beta : alpha;
         }
 
         if (depth == 0 || BoardUtils.isEndGameScenario(board)) {
             this.boardsEvaluated++;
             int evaluation = this.evaluator.evaluate(board, depth);
-            this.rememberedBoards.put(boardHexString, new BoardState(depth, evaluation)); /* TODO Check if depth on end game scenario changes anything!!! */
+            this.rememberedBoards.put(boardHexString, new BoardState(depth, evaluation, NodeType.EXACT)); /* TODO Check if depth on end game scenario changes anything!!! */
             return evaluation;
         }
 
         for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves(), depth, this.killerMoves)) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
-            String zobristHexHashCode = Long.toHexString(moveTransition.getTransitionBoard().getZobristHashCode());
-            if (this.rememberedBoards.containsKey(zobristHexHashCode)
-                && this.rememberedBoards.get(zobristHexHashCode).depth() >= depth - 1) {
-                log.info("Boards' hash found in remembered board: " + zobristHexHashCode);
-                beta = Math.min(beta, this.rememberedBoards.get(zobristHexHashCode).score());
-            } else {
-                if (moveTransition.getMoveStatus().isDone()) {
-                    if (depth == 1 && move.isAttack()) {
-                        beta = Math.min(beta,
-                                quietMax(moveTransition.getTransitionBoard(), alpha, beta));
-                    } else {
-                        int moveScore = max(moveTransition.getTransitionBoard(), depth - 1,
-                                alpha, beta);
-                        beta = Math.min(beta, moveScore);
-                        this.rememberedBoards.put(zobristHexHashCode, new BoardState(depth - 1, moveScore));
-                        log.info("Boards' hash added: " + zobristHexHashCode + " on depth: " + (depth - 1));
-                    }
-
-                    if (beta <= alpha) {
-                        this.storeKillerMove(move, depth);
-                        break;
-                    }
+            if (moveTransition.getMoveStatus().isDone()) {
+                if (depth == 1 && move.isAttack()) {
+                    beta = Math.min(beta,
+                            quietMax(moveTransition.getTransitionBoard(), alpha, beta));
+                } else {
+                    int moveScore = max(moveTransition.getTransitionBoard(), depth - 1,
+                            alpha, beta);
+                    beta = Math.min(beta, moveScore);
+                }
+                if (beta <= alpha) {
+                    this.storeKillerMove(move, depth);
+                    break;
                 }
             }
         }
+        this.rememberedBoards.put(boardHexString, new BoardState(depth, beta, beta <= alpha ? NodeType.UPPER : NodeType.EXACT));
         return beta;
     }
 
-    private int max(final Board board, final int depth, int alpha, final int beta) {
+    private int max(final Board board, final int depth, int alpha, int beta) {
         String boardHexString = Long.toHexString(board.getZobristHashCode());
         if (this.rememberedBoards.containsKey(boardHexString)
                 && this.rememberedBoards.get(boardHexString).depth() >= depth) {
-            log.info("Boards' hash found in remembered board: {}", boardHexString);
-            if (this.rememberedBoards.get(boardHexString).depth() > depth) {
-                return this.rememberedBoards.get(boardHexString).score();
+            BoardState boardState = this.rememberedBoards.get(boardHexString);
+            switch (boardState.nodeType()) {
+                case EXACT: return boardState.score();
+                case LOWER: alpha = Math.max(alpha, boardState.score()); break;
+                case UPPER: beta = Math.min(beta, boardState.score()); break;
             }
+            if (alpha >= beta) return boardState.nodeType() == NodeType.LOWER ? beta : alpha;
         }
 
         if (depth == 0 || BoardUtils.isEndGameScenario(board)) {
             this.boardsEvaluated++;
             int evaluation = this.evaluator.evaluate(board, depth);
-            this.rememberedBoards.put(boardHexString, new BoardState(0, evaluation));
+            this.rememberedBoards.put(boardHexString, new BoardState(0, evaluation, NodeType.EXACT));
             return evaluation;
         }
 
         for (Move move : this.moveSorter.sort(board.getCurrentPlayer().getLegalMoves(), depth, this.killerMoves)) {
             MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
-            String zobristHexHashCode = Long.toHexString(moveTransition.getTransitionBoard().getZobristHashCode());
-            if (this.rememberedBoards.containsKey(zobristHexHashCode)
-                    && this.rememberedBoards.get(zobristHexHashCode).depth() >= depth - 1) {
-                log.info("Boards' hash found in remembered board: " + zobristHexHashCode + ". Current depth : "
-                            + depth + ". Remembered depth : " + this.rememberedBoards.get(zobristHexHashCode).depth());
-                alpha = Math.max(alpha, this.rememberedBoards.get(zobristHexHashCode).score());
-            } else {
-                if (moveTransition.getMoveStatus().isDone()) {
-                    if (depth == 1 && move.isAttack()) {
-                        alpha = Math.max(alpha,
-                                quietMin(moveTransition.getTransitionBoard(), alpha, beta));
-                    } else {
-                        int moveScore = min(moveTransition.getTransitionBoard(), depth - 1,
-                                alpha, beta);
-                        alpha = Math.max(alpha, moveScore);
-                        this.rememberedBoards.put(zobristHexHashCode, new BoardState(depth - 1, moveScore));
-                        log.info("Boards' hash added: " + zobristHexHashCode + " on depth: " + (depth - 1));
-                    }
+            if (moveTransition.getMoveStatus().isDone()) {
+                if (depth == 1 && move.isAttack()) {
+                    alpha = Math.max(alpha,
+                            quietMin(moveTransition.getTransitionBoard(), alpha, beta));
+                } else {
+                    int moveScore = min(moveTransition.getTransitionBoard(), depth - 1,
+                            alpha, beta);
+                    alpha = Math.max(alpha, moveScore);
+                }
+                if (beta <= alpha) {
+                    this.storeKillerMove(move, depth);
+                    break;
                 }
             }
-            if (beta <= alpha) {
-                this.storeKillerMove(move, depth);
-                break;
-            }
         }
+        this.rememberedBoards.put(boardHexString, new BoardState(depth, alpha, alpha >= beta ? NodeType.LOWER : NodeType.EXACT));
         return alpha;
     }
 

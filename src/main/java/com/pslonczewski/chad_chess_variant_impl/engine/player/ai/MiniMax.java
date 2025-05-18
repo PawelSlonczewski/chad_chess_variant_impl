@@ -16,7 +16,7 @@ public class MiniMax implements MoveStrategy {
     private int freqTableIndex;
 
     public MiniMax() {
-        this.boardEvaluator = new StandardBoardEvaluator();
+        this.boardEvaluator = new MyBoardEvaluator();
         this.boardsEvaluated = 0;
     }
 

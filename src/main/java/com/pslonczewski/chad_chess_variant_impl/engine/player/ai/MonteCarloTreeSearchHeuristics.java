@@ -21,11 +21,10 @@ public class MonteCarloTreeSearchHeuristics implements MoveStrategy{
     private Node root;
     private Thread mainThread;
     private final long timer;
-    private final BoardEvaluator evaluator;
+    private final BoardEvaluator evaluator = new MyBoardEvaluator();;
 
     public MonteCarloTreeSearchHeuristics(long timer) {
         this.timer = timer;
-        this.evaluator = new StandardBoardEvaluator();
     }
 
     @Override

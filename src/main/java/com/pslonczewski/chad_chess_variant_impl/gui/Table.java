@@ -53,7 +53,8 @@ public class Table extends Observable {
 
     private final Color lightTileColor = Color.decode("#FFFACD");
     private final Color darkTileColor = Color.decode("#593E1A");
-    private final Color wallTileColor = Color.decode("#3a2222");
+    private final Color tileColor = Color.decode("#ffcf9f");
+    private final Color wallTileColor = Color.decode("#d28c45");
 
     protected static final Map<String, BoardState> rememberedBoards = new HashMap<>();
 
@@ -66,7 +67,7 @@ public class Table extends Observable {
         this.gameFrame.setJMenuBar(tableMenuBar);
         this.gameFrame.setSize(OUTER_FRAME_DIMENSION);
 
-        this.chessBoard = Board.createProblem1Board();
+        this.chessBoard = Board.createProblem3Board();
         this.boardHistory.add(Long.toHexString(this.chessBoard.getZobristHashCode()));
         this.gameHistoryPanel = new GameHistoryPanel();
         this.takenPiecesPanel = new TakenPiecesPanel();
@@ -335,7 +336,8 @@ public class Table extends Observable {
         final List<TilePanel> boardTiles;
 
         BoardPanel() {
-            super(new GridLayout(BoardUtils.NUM_TILES / BoardUtils.NUM_TILES_PER_ROW, BoardUtils.NUM_TILES_PER_ROW));
+            super(new GridLayout(BoardUtils.NUM_TILES / BoardUtils.NUM_TILES_PER_ROW, BoardUtils.NUM_TILES_PER_ROW, 1, 1));
+            setBackground(Color.BLACK);
             this.boardTiles = new ArrayList<>();
             for (int i = 0; i < BoardUtils.NUM_TILES; i++) {
                 final TilePanel tilePanel = new TilePanel(this, i);
@@ -528,18 +530,25 @@ public class Table extends Observable {
         }
 
         private void assignTileColor() {
+//            if (BoardUtils.WHITE_WALL[this.tileId]
+//                    || BoardUtils.BLACK_WALL[this.tileId]) {
+//                setBackground(wallTileColor);
+//            } else if (BoardUtils.TWELFTH_RANK[this.tileId]
+//                    || BoardUtils.TENTH_RANK[this.tileId]
+//                    || BoardUtils.EIGHTH_RANK[this.tileId]
+//                    || BoardUtils.SIXTH_RANK[this.tileId]
+//                    || BoardUtils.FOURTH_RANK[this.tileId]
+//                    || BoardUtils.SECOND_RANK[this.tileId]) {
+//                setBackground(this.tileId % 2 == 0 ? lightTileColor : darkTileColor);
+//            } else {
+//                setBackground(this.tileId % 2 != 0 ? lightTileColor : darkTileColor);
+//            }
+
             if (BoardUtils.WHITE_WALL[this.tileId]
                     || BoardUtils.BLACK_WALL[this.tileId]) {
                 setBackground(wallTileColor);
-            } else if (BoardUtils.TWELFTH_RANK[this.tileId]
-                    || BoardUtils.TENTH_RANK[this.tileId]
-                    || BoardUtils.EIGHTH_RANK[this.tileId]
-                    || BoardUtils.SIXTH_RANK[this.tileId]
-                    || BoardUtils.FOURTH_RANK[this.tileId]
-                    || BoardUtils.SECOND_RANK[this.tileId]) {
-                setBackground(this.tileId % 2 == 0 ? lightTileColor : darkTileColor);
             } else {
-                setBackground(this.tileId % 2 != 0 ? lightTileColor : darkTileColor);
+                setBackground(tileColor);
             }
         }
     }

@@ -196,6 +196,56 @@ public class Board {
         return builder.build();
     }
 
+    public static Board createProblem2Board() {
+        Board.Builder builder = new Board.Builder();
+
+        builder.setPiece(new Rook(Alliance.WHITE, 7));
+        builder.setPiece(new Rook(Alliance.BLACK, 8));
+        builder.setPiece(new Rook(Alliance.BLACK, 31));
+        builder.setPiece(new Rook(Alliance.BLACK, 43));
+        builder.setPiece(new King(Alliance.BLACK, 44));
+        builder.setPiece(new Rook(Alliance.WHITE, 50));
+        builder.setPiece(new Rook(Alliance.BLACK, 56));
+        builder.setPiece(new Rook(Alliance.WHITE, 62));
+        builder.setPiece(new Rook(Alliance.BLACK, 77));
+        builder.setPiece(new Rook(Alliance.WHITE, 87));
+        builder.setPiece(new Rook(Alliance.WHITE, 88));
+        builder.setPiece(new Rook(Alliance.BLACK, 93));
+        builder.setPiece(new Rook(Alliance.WHITE, 102));
+        builder.setPiece(new King(Alliance.WHITE, 111));
+        builder.setPiece(new Rook(Alliance.WHITE, 112));
+        builder.setPiece(new Rook(Alliance.BLACK, 114));
+        builder.setPiece(new Rook(Alliance.WHITE, 123));
+        builder.setPiece(new Rook(Alliance.BLACK, 129));
+
+        builder.setMoveMaker(Alliance.WHITE);
+
+        return builder.build();
+    }
+
+    public static Board createProblem3Board() {
+        Board.Builder builder = new Board.Builder();
+
+        builder.setPiece(new Rook(Alliance.BLACK, 26));
+        builder.setPiece(new Rook(Alliance.BLACK, 32));
+        builder.setPiece(new Rook(Alliance.BLACK, 43));
+        builder.setPiece(new King(Alliance.BLACK, 44));
+        builder.setPiece(new Rook(Alliance.WHITE, 50));
+        builder.setPiece(new Rook(Alliance.BLACK, 55));
+        builder.setPiece(new Rook(Alliance.BLACK, 56));
+        builder.setPiece(new Rook(Alliance.WHITE, 75));
+        builder.setPiece(new Rook(Alliance.WHITE, 88));
+        builder.setPiece(new Rook(Alliance.BLACK, 92));
+        builder.setPiece(new King(Alliance.WHITE, 99));
+        builder.setPiece(new Rook(Alliance.WHITE, 100));
+        builder.setPiece(new Rook(Alliance.WHITE, 115));
+        builder.setPiece(new Rook(Alliance.WHITE, 117));
+
+        builder.setMoveMaker(Alliance.WHITE);
+
+        return builder.build();
+    }
+
     public Iterable<Move> getAllLegalMoves() {
         return Iterables.unmodifiableIterable(
                 Iterables.concat(this.whitePlayer.getLegalMoves(), this.blackPlayer.getLegalMoves())
