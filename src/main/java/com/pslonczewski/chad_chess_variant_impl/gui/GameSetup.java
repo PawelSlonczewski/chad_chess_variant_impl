@@ -54,7 +54,7 @@ public class GameSetup extends JDialog {
         this.searchDepthSpinner.setValue(5);
 
         this.timeSpinner = addLabeledSpinner(myPanel, "Limit czasu",
-                                             new SpinnerNumberModel(30, 0, Long.MAX_VALUE, 1));
+                                             new SpinnerNumberModel(30, 0, Integer.MAX_VALUE, 1));
 
 
         myPanel.add(new JLabel("Algorytmy SI:"));
@@ -96,8 +96,8 @@ public class GameSetup extends JDialog {
         return (Integer) this.searchDepthSpinner.getValue();
     }
 
-    public long getTimeSpinnerSpinnerValue() {
-        return (long) this.timeSpinner.getValue();
+    public int getTimeSpinnerSpinnerValue() {
+        return (int) this.timeSpinner.getValue();
     }
 
     void promptUser() {

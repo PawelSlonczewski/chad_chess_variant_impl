@@ -332,7 +332,7 @@ public class Table extends Observable {
 
             int spinnerDepthValue = Table.get().getGameSetup().getSearchDepthSpinnerValue();
             AiType aiType = Table.get().getGameSetup().getSelectedAiType();
-            long timeLimit = Table.get().getGameSetup().getTimeSpinnerSpinnerValue();
+            int timeLimit = Table.get().getGameSetup().getTimeSpinnerSpinnerValue();
 
             final MoveStrategy moveStrategy = switch (aiType) {
                 case MIN_MAX -> new MiniMax();
