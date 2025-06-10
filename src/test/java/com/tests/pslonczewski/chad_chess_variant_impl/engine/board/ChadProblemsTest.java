@@ -219,8 +219,8 @@ public class ChadProblemsTest {
 
         Map<String, BoardState> testmap = new HashMap<>();
 
-        int moveStrategyNumber = 4;
-        int depth = 2;
+        int moveStrategyNumber = 2;
+        int depth = 6;
         int timer = 60;
 
         MoveStrategy ms = moveStrategyChooser(moveStrategyNumber, testmap, depth, timer, board);

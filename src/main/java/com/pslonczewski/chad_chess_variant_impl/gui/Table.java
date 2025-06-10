@@ -6,6 +6,7 @@ import com.pslonczewski.chad_chess_variant_impl.engine.board.Move.MoveFactory;
 import com.pslonczewski.chad_chess_variant_impl.engine.pieces.Piece;
 import com.pslonczewski.chad_chess_variant_impl.engine.board.MoveTransition;
 import com.pslonczewski.chad_chess_variant_impl.engine.player.ai.*;
+import com.pslonczewski.chad_chess_variant_impl.gui.GameSetup.AiType;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -46,15 +47,19 @@ public class Table extends Observable {
 
     private boolean highlightLegalMoves;
 
-    private final static Dimension OUTER_FRAME_DIMENSION = new Dimension(600, 600);
-    private final static Dimension BOARD_PANEL_DIMENSION = new Dimension(400, 350);
+    private final static Dimension OUTER_FRAME_DIMENSION = new Dimension(840, 790);
+    private final static Dimension BOARD_PANEL_DIMENSION = new Dimension(400, 400);
     private final static Dimension TILE_PANEL_DIMENSION = new Dimension(10, 10);
+
+    private final static Dimension ROW_COLUMN_LABEL_DIMENSION = new Dimension(20, 20);
+
     private final static String defaultPieceImagesPath = "art/pieces/plain/";
 
-    private final Color lightTileColor = Color.decode("#FFFACD");
-    private final Color darkTileColor = Color.decode("#593E1A");
     private final Color tileColor = Color.decode("#ffcf9f");
     private final Color wallTileColor = Color.decode("#d28c45");
+
+    private final JPanel rowLabelsPanel;
+    private final JPanel columnLabelsPanel;
 
     protected static final Map<String, BoardState> rememberedBoards = new HashMap<>();
 
@@ -66,19 +71,30 @@ public class Table extends Observable {
         final JMenuBar tableMenuBar = createTableMenuBar();
         this.gameFrame.setJMenuBar(tableMenuBar);
         this.gameFrame.setSize(OUTER_FRAME_DIMENSION);
+        this.gameFrame.setResizable(false);
 
-        this.chessBoard = Board.createProblem3Board();
+        this.chessBoard = Board.createStandardBoard();
         this.boardHistory.add(Long.toHexString(this.chessBoard.getZobristHashCode()));
         this.gameHistoryPanel = new GameHistoryPanel();
         this.takenPiecesPanel = new TakenPiecesPanel();
         this.boardPanel = new BoardPanel();
+
+        this.rowLabelsPanel = new JPanel();
+        this.columnLabelsPanel = new JPanel();
+
         this.moveLog = new MoveLog();
         this.addObserver(new TableGameAIWatcher());
         this.gameSetup = new GameSetup(this.gameFrame, true);
         this.boardDirection = BoardDirection.NORMAL;
         this.highlightLegalMoves = false;
+
+        JPanel boardContainer = new JPanel(new BorderLayout());
+        boardContainer.add(boardPanel, BorderLayout.CENTER);
+        boardContainer.add(createRowLabels(), BorderLayout.WEST);
+        boardContainer.add(createColumnLabels(), BorderLayout.SOUTH);
+
         this.gameFrame.add(this.takenPiecesPanel, BorderLayout.WEST);
-        this.gameFrame.add(this.boardPanel, BorderLayout.CENTER);
+        this.gameFrame.add(boardContainer, BorderLayout.CENTER);
         this.gameFrame.add(this.gameHistoryPanel, BorderLayout.EAST);
 
         this.gameFrame.setVisible(true);
@@ -117,9 +133,9 @@ public class Table extends Observable {
     }
 
     private JMenu createFileMenu() {
-        final JMenu fileMenu = new JMenu("File");
+        final JMenu fileMenu = new JMenu("Ogólne");
         
-        final JMenuItem exitMenuItem = new JMenuItem("Exit");
+        final JMenuItem exitMenuItem = new JMenuItem("Zamknij program");
         exitMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -133,20 +149,24 @@ public class Table extends Observable {
     }
 
     private JMenu createPreferenceMenu() {
-        final JMenu preferenceMenu = new JMenu("Preferences");
-        final JMenuItem flipBoardMenuItem = new JMenuItem("Flip Board");
+        final JMenu preferenceMenu = new JMenu("Preferencje");
+        final JMenuItem flipBoardMenuItem = new JMenuItem("Obrót tablicy");
         flipBoardMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 boardDirection = boardDirection.opposite();
                 boardPanel.drawBoard(chessBoard);
+                updateRowLabels();
+                updateColumnLabels();
+                rowLabelsPanel.revalidate();
+                columnLabelsPanel.revalidate();
             }
         });
         preferenceMenu.add(flipBoardMenuItem);
 
         preferenceMenu.addSeparator();
 
-        final JCheckBoxMenuItem legalMoveHighlighterCheckBox = new JCheckBoxMenuItem("Highlight Legal Moves", false);
+        final JCheckBoxMenuItem legalMoveHighlighterCheckBox = new JCheckBoxMenuItem("Podświetlenie legalnych ruchów", false);
         legalMoveHighlighterCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -161,9 +181,9 @@ public class Table extends Observable {
     }
 
     private JMenu createOptionsMenu() {
-        final JMenu optionsMenu = new JMenu("Options");
+        final JMenu optionsMenu = new JMenu("Opcje");
 
-        final JMenuItem setupGameMenuItem = new JMenuItem("Setup Game");
+        final JMenuItem setupGameMenuItem = new JMenuItem("Konfiguracja gry");
         setupGameMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -175,6 +195,44 @@ public class Table extends Observable {
         optionsMenu.add(setupGameMenuItem);
 
         return optionsMenu;
+    }
+
+    private JPanel createRowLabels() {
+        rowLabelsPanel.setLayout(new GridLayout(BoardUtils.NUM_TILES / BoardUtils.NUM_TILES_PER_ROW, 1));
+        updateRowLabels();
+        return rowLabelsPanel;
+    }
+
+    private JPanel createColumnLabels() {
+        columnLabelsPanel.setLayout(new GridLayout(1, BoardUtils.NUM_TILES_PER_ROW, 1, 0));
+        updateColumnLabels();
+        return columnLabelsPanel;
+    }
+
+    private void updateRowLabels() {
+        rowLabelsPanel.removeAll();
+        int start = boardDirection == BoardDirection.NORMAL ? 12 : 1;
+        int end = boardDirection == BoardDirection.NORMAL ? 1 : 12;
+        int step = boardDirection == BoardDirection.NORMAL ? -1 : 1;
+
+        for (int i = start; (step == 1) ? i <= end : i >= end; i += step) {
+            JLabel label = new JLabel(String.valueOf(i), SwingConstants.CENTER);
+            label.setPreferredSize(ROW_COLUMN_LABEL_DIMENSION);
+            rowLabelsPanel.add(label);
+        }
+    }
+
+    private void updateColumnLabels() {
+        columnLabelsPanel.removeAll();
+        char start = boardDirection == BoardDirection.NORMAL ? 'A' : 'L';
+        char end = boardDirection == BoardDirection.NORMAL ? 'L' : 'A';
+        int step = boardDirection == BoardDirection.NORMAL ? 1 : -1;
+
+        for (char c = start; (step == 1) ? c <= end : c >= end; c += step) {
+            JLabel label = new JLabel(String.valueOf(c), SwingConstants.CENTER);
+            label.setPreferredSize(ROW_COLUMN_LABEL_DIMENSION);
+            columnLabelsPanel.add(label);
+        }
     }
 
     private void setupUpdate(final GameSetup gameSetup) {
@@ -273,15 +331,29 @@ public class Table extends Observable {
         protected Move doInBackground() throws Exception {
 
             int spinnerDepthValue = Table.get().getGameSetup().getSearchDepthSpinnerValue();
+            AiType aiType = Table.get().getGameSetup().getSelectedAiType();
+            long timeLimit = Table.get().getGameSetup().getTimeSpinnerSpinnerValue();
+
+            final MoveStrategy moveStrategy = switch (aiType) {
+                case MIN_MAX -> new MiniMax();
+                case ALPHA_BETA -> new AlphaBetaPruningWithMoveSorterAndTranspositionTable(rememberedBoards, spinnerDepthValue);
+                case ITERATIVE_DEEPENING -> new IterativeDeepeningWithTranspositionTable(rememberedBoards, spinnerDepthValue);
+                case MCTS_NON_HEURISTIC -> new MonteCarloTreeSearchNonHeuristics(timeLimit);
+                case MCTS_HEURISTIC -> new MonteCarloTreeSearchHeuristics(timeLimit);
+                default -> new AlphaBetaPruningWithMoveSorterAndTranspositionTable(rememberedBoards, spinnerDepthValue);
+            };
+
+
+            return moveStrategy.execute(Table.get().getGameBoard(), spinnerDepthValue);
 
 //            final MoveStrategy miniMax = new MiniMax();
 //
 //            return miniMax.execute(Table.get().getGameBoard(),
 //                                   Table.get().getGameSetup().getSearchDepthSpinnerValue());
 
-            final MoveStrategy alphaBetaPrun = new AlphaBetaPruningWithMoveSorter(spinnerDepthValue);
-
-            return alphaBetaPrun.execute(Table.get().getGameBoard(), spinnerDepthValue);
+//            final MoveStrategy alphaBetaPrun = new AlphaBetaPruningWithMoveSorter(spinnerDepthValue);
+//
+//            return alphaBetaPrun.execute(Table.get().getGameBoard(), spinnerDepthValue);
 
 //            final MoveStrategy iterativeDeepeningWithPruning = new IterativeDeepening();
 //
@@ -396,7 +468,8 @@ public class Table extends Observable {
         private final int tileId;
 
         TilePanel(final BoardPanel boardPanel, final int tileId) {
-            super(new GridBagLayout());
+            super();
+            setLayout(new OverlayLayout(this));
             this.tileId = tileId;
             setPreferredSize(TILE_PANEL_DIMENSION);
             assignTileColor();
@@ -481,14 +554,17 @@ public class Table extends Observable {
 
         public void drawTile(final Board board) {
             assignTileColor();
-            assignTilePieceIcon(board);
+
             highlightLegals(board);
+            assignTilePieceIcon(board);
             validate();
             repaint();
         }
 
         private void assignTilePieceIcon(final Board board) {
-            this.removeAll();
+            if (!highlightLegalMoves) {
+                this.removeAll();
+            }
             if (board.getTile(this.tileId).isTileOccupied()) {
                 final BufferedImage image;
                 try {
@@ -500,16 +576,24 @@ public class Table extends Observable {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                add(new JLabel(new ImageIcon(image)));
+                JLabel pieceLabel = new JLabel(new ImageIcon(image));
+                pieceLabel.setAlignmentX(0.5f);
+                pieceLabel.setAlignmentY(0.5f);
+                add(pieceLabel);
             }
         }
 
         private void highlightLegals(final Board board) {
+            this.removeAll();
             if (highlightLegalMoves) {
                 for (final Move move : pieceLegalMoves(board)) {
                     if (move.getDestinationCoordinate() == this.tileId) {
                         try {
-                            add(new JLabel(new ImageIcon(ImageIO.read(new File("art/misc/green_dot.png")))));
+                            JLabel greenDotLabel = new JLabel(new ImageIcon(ImageIO.read(new File("art/misc/green_dot.png"))));
+                            greenDotLabel.setAlignmentX(0.5f);
+                            greenDotLabel.setAlignmentY(0.5f);
+
+                            add(greenDotLabel);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -530,20 +614,6 @@ public class Table extends Observable {
         }
 
         private void assignTileColor() {
-//            if (BoardUtils.WHITE_WALL[this.tileId]
-//                    || BoardUtils.BLACK_WALL[this.tileId]) {
-//                setBackground(wallTileColor);
-//            } else if (BoardUtils.TWELFTH_RANK[this.tileId]
-//                    || BoardUtils.TENTH_RANK[this.tileId]
-//                    || BoardUtils.EIGHTH_RANK[this.tileId]
-//                    || BoardUtils.SIXTH_RANK[this.tileId]
-//                    || BoardUtils.FOURTH_RANK[this.tileId]
-//                    || BoardUtils.SECOND_RANK[this.tileId]) {
-//                setBackground(this.tileId % 2 == 0 ? lightTileColor : darkTileColor);
-//            } else {
-//                setBackground(this.tileId % 2 != 0 ? lightTileColor : darkTileColor);
-//            }
-
             if (BoardUtils.WHITE_WALL[this.tileId]
                     || BoardUtils.BLACK_WALL[this.tileId]) {
                 setBackground(wallTileColor);
@@ -565,6 +635,11 @@ public class Table extends Observable {
             BoardDirection opposite() {
                 return FLIPPED;
             }
+
+            @Override
+            boolean isNormal() {
+                return true;
+            }
         },
         FLIPPED {
             @Override
@@ -576,10 +651,16 @@ public class Table extends Observable {
             BoardDirection opposite() {
                 return NORMAL;
             }
+
+            @Override
+            boolean isNormal() {
+                return false;
+            }
         };
 
         abstract List<TilePanel> traverse(final List<TilePanel> boardTiles);
         abstract BoardDirection opposite();
+        abstract boolean isNormal();
     }
 
     enum PlayerType {

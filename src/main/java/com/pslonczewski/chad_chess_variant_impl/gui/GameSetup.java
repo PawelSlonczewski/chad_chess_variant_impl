@@ -16,12 +16,15 @@ public class GameSetup extends JDialog {
     private final JSpinner searchDepthSpinner;
     private final JSpinner timeSpinner;
 
-    private static final String HUMAN_TEXT = "Human";
-    private static final String COMPUTER_TEXT = "Computer";
+    private static final String HUMAN_TEXT = "Człowiek";
+    private static final String COMPUTER_TEXT = "Komputer";
+
+    private AiType selectedAiType = AiType.ALPHA_BETA;
 
     GameSetup(final JFrame frame, final boolean modal) {
-        super(frame, modal);
+        super(frame, "Konfiguracja gry", modal);
         final JPanel myPanel = new JPanel(new GridLayout(0, 1));
+        this.setResizable(false);
         final JRadioButton whiteHumanButton = new JRadioButton(HUMAN_TEXT);
         final JRadioButton whiteComputerButton = new JRadioButton(COMPUTER_TEXT);
         final JRadioButton blackHumanButton = new JRadioButton(HUMAN_TEXT);
@@ -38,26 +41,34 @@ public class GameSetup extends JDialog {
         blackHumanButton.setSelected(true);
 
         getContentPane().add(myPanel);
-        myPanel.add(new JLabel("White"));
+        myPanel.add(new JLabel("Biały"));
         myPanel.add(whiteHumanButton);
         myPanel.add(whiteComputerButton);
-        myPanel.add(new JLabel("Black"));
+        myPanel.add(new JLabel("Czarny"));
         myPanel.add(blackHumanButton);
         myPanel.add(blackComputerButton);
 
-        myPanel.add(new JLabel("Search"));
-        this.searchDepthSpinner = addLabeledSpinner(myPanel, "Search Depth", new SpinnerNumberModel(6, 0,
+        myPanel.add(new JLabel("Przeszukiwanie"));
+        this.searchDepthSpinner = addLabeledSpinner(myPanel, "Głębokość przeszukiwania", new SpinnerNumberModel(6, 0,
                 Integer.MAX_VALUE, 1));
+        this.searchDepthSpinner.setValue(5);
 
-        this.timeSpinner = addLabeledSpinner(myPanel, "Max time for each move",
+        this.timeSpinner = addLabeledSpinner(myPanel, "Limit czasu",
                                              new SpinnerNumberModel(30, 0, Long.MAX_VALUE, 1));
 
-        final JButton cancelButton = new JButton("Cancel");
+
+        myPanel.add(new JLabel("Algorytmy SI:"));
+        JComboBox<AiType> aiTypeComboBox = new JComboBox<>(AiType.values());
+        aiTypeComboBox.setSelectedItem(AiType.ALPHA_BETA);
+        myPanel.add(aiTypeComboBox);
+
+        final JButton cancelButton = new JButton("Anuluj");
         final JButton okButton = new JButton("OK");
 
         okButton.addActionListener(e -> {
             this.whitePlayerType = whiteComputerButton.isSelected() ? PlayerType.COMPUTER : PlayerType.HUMAN;
             this.blackPlayerType = blackComputerButton.isSelected() ? PlayerType.COMPUTER : PlayerType.HUMAN;
+            this.selectedAiType = (AiType) aiTypeComboBox.getSelectedItem();
             GameSetup.this.setVisible(false);
         });
 
@@ -75,6 +86,10 @@ public class GameSetup extends JDialog {
         setLocationRelativeTo(frame);
         pack();
         setVisible(false);
+    }
+
+    public AiType getSelectedAiType() {
+        return this.selectedAiType;
     }
 
     public int getSearchDepthSpinnerValue() {
@@ -114,5 +129,13 @@ public class GameSetup extends JDialog {
         l.setLabelFor(spinner);
         c.add(spinner);
         return spinner;
+    }
+
+    public enum AiType {
+        MIN_MAX,
+        ALPHA_BETA,
+        ITERATIVE_DEEPENING,
+        MCTS_NON_HEURISTIC,
+        MCTS_HEURISTIC
     }
 }

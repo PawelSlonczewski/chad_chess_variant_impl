@@ -14,7 +14,7 @@ public class GameHistoryPanel extends JPanel {
 
     private final DataModel model;
     private final JScrollPane scrollPane;
-    private static final Dimension HISTORY_PANE_DIMENSION = new Dimension(100, 400);
+    private static final Dimension HISTORY_PANE_DIMENSION = new Dimension(150, 400);
 
     GameHistoryPanel() {
         this.setLayout(new BorderLayout());
@@ -69,7 +69,7 @@ public class GameHistoryPanel extends JPanel {
     private static class DataModel extends DefaultTableModel {
 
         private final List<Row> values;
-        private static final String[] NAMES = { "White", "Black" };
+        private static final String[] NAMES = { "Biały", "Czarny" };
 
         DataModel() {
             this.values = new ArrayList<>();
